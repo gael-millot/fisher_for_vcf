@@ -184,15 +184,15 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 | Column | Description |
 | --- | --- |
 | **chr** | Chromosome name |
-| **position** | position on the chromosome (in bp) |
+| **position** | Position on the chromosome (in bp) |
 | **ref** | Reference allele sequence |
 | **alt** | Alternative allele (ALT) sequence |
-| **gene** | gene name |
-| **severity** | severity of the alternative allele from VEP (*consequence* field) |
-| **impact** | impact of the alternative allele from VEP (*IMPACT* field) |
-| **aff** | count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases |
+| **gene** | Gene name |
+| **severity** | Severity of the alternative allele from VEP (*consequence* field) |
+| **impact** | Impact of the alternative allele from VEP (*IMPACT* field) |
+| **aff** | Count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases. Example: {0:4, 1:2} for 4 cases HOM_REF and 2 cases HET |
 | **una** | as in *aff* in the unaffected cases |
-| **OR** | Odds ratio (n11/n12)/(n21/n22) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /><br /></li><li>n12 = nHOM_REF_aff<br /><ul><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /><br /></li><li>n22 = nHOM_REF_unaff</li><br />
+| **OR** | Odds ratio (n11/n12)/(n21/n22) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /></li><li>n12 = nHOM_REF_aff<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /></li><li>n22 = nHOM_REF_unaff<br /></li>
 OR > 1 meaning OR in favor of HET+HOM_ALT/aff |
 | **p-value** | p-value of the exact fisher test |
 | **-log10(pval)** | -log10 of the p-value |
