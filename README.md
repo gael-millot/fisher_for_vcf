@@ -24,25 +24,24 @@
 <br /><br />
 ## AIM
 
-Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
-Return a tsv file and a Miami plot.
+Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a tsv file and a Miami plot.
 
 <br /><br />
 ## CONTENT
 
-**fisher_for_vcf.nf** file that can be executed using a CLI (command line interface)
+**fisher_for_vcf.nf** File that can be executed using a CLI (command line interface)
 
-**fisher_for_vcf.config** parameter settings for the fisher_for_vcf.nf file
+**fisher_for_vcf.config** Parameter settings for the fisher_for_vcf.nf file
 
-**dataset** folder containing some datasets than can be used as examples
+**dataset** Folder containing some datasets than can be used as examples
 
-| Column | Description |
+| File | Description |
 | --- | --- |
 | **Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz** | First 10,000 lines of /pasteur/zeus/projets/p02/ghfc_wgs_zeus/WGS/Dyslexia/vcf/Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz |
 | **Dyslexia.pedigree.txt** | Pedigree associated to Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz |
 | **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot |
 
-**example_of_results** folder containing examples of result obtained with the dataset
+**example_of_results** Folder containing examples of result obtained with the dataset
 
 
 <br /><br />
