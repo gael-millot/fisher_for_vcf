@@ -110,10 +110,10 @@ See chmod in protocol 44.
 Like above but then run the following command from here \\wsl$\Ubuntu-20.04\home\gael:
 
 ```bash
-nextflow run fisher_for_vcf.nf -C fisher_for_vcf.config
+nextflow run fisher_for_vcf.nf -c fisher_for_vcf.config
 ```
 
-with -C to specify the name of the config file used.
+with -c to specify the name of the config file used.
 
 If an error message appears, like:
 ```

@@ -1,0 +1,5 @@
+work/
+singularity/
+results/
+.nextflow/
+.nextflow*

@@ -1,0 +1,70 @@
+digraph "dag" {
+p0 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+p0 -> p6 [label="vcf_ch"];
+
+p1 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p8 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p1 -> p8 [label="tbi_ch"];
+
+p2 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p2 -> p7 [label="ped_ch"];
+
+p3 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p16 [label="miamiplot"];
+p3 -> p16 [label="chr_ch"];
+
+p4 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.from"];
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+p4 -> p6 [label="region_ch"];
+
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+p9 [label="fisher"];
+p6 -> p9;
+
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p9 [label="fisher"];
+p7 -> p9;
+
+p8 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p9 [label="fisher"];
+p8 -> p9;
+
+p9 [label="fisher"];
+p10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collectFile"];
+p9 -> p10 [label="fisher_ch1"];
+
+p10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collectFile"];
+p11 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p10 -> p11;
+
+p11 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="subscribe"];
+p11 -> p12 [label="fisher_ch2"];
+
+p11 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p16 [label="miamiplot"];
+p11 -> p16 [label="fisher_ch3"];
+
+p13 [shape=point,label="",fixedsize=true,width=0.1];
+p16 [label="miamiplot"];
+p13 -> p16 [label="y_lim1"];
+
+p14 [shape=point,label="",fixedsize=true,width=0.1];
+p16 [label="miamiplot"];
+p14 -> p16 [label="y_lim2"];
+
+p15 [shape=point,label="",fixedsize=true,width=0.1];
+p16 [label="miamiplot"];
+p15 -> p16 [label="cute_file"];
+
+p17 [shape=point,label="",fixedsize=true,width=0.1];
+p19 [label="Backup"];
+p17 -> p19 [label="config_file"];
+
+p18 [shape=point,label="",fixedsize=true,width=0.1];
+p19 [label="Backup"];
+p18 -> p19 [label="log_file"];
+
+}

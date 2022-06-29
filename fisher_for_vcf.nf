@@ -1,7 +1,7 @@
 /*
 #########################################################################
 ##                                                                     ##
-##     vcf_fisher.nf                                                   ##
+##     fisher_for_vcf.nf                                               ##
 ##                                                                     ##
 ##     Gael A. Millot                                                  ##
 ##     Bioinformatics and Biostatistics Hub                            ##
@@ -22,7 +22,7 @@ params.modules = ""
 //////// Variables
 
 // from the nextflow.config file
-config_file = file("${projectDir}/vcf_fisher.config")
+config_file = file("${projectDir}/fisher_for_vcf.config")
 log_file = file("${launchDir}/.nextflow.log")
 cute_file=file(cute_path) // converted to file directly to use it as a constant
 // end from the nextflow.config file
