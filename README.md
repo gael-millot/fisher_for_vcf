@@ -36,31 +36,17 @@ Return a tsv file and a Miami plot.
 
 **dataset** folder containing some datasets than can be used as examples
 
-Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz: first 10,000 lines of /pasteur/zeus/projets/p02/ghfc_wgs_zeus/WGS/Dyslexia/vcf/Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz
-
-Dyslexia.pedigree.txt: pedigree associated to Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz
-
-hg19_grch37p5_chr_size_cumul.txt: coordinates of the hg19_grch37p5 Human Genome for the Miami plot
+| Column | Description |
+| --- | --- |
+| **Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz** | First 10,000 lines of /pasteur/zeus/projets/p02/ghfc_wgs_zeus/WGS/Dyslexia/vcf/Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz |
+| **Dyslexia.pedigree.txt** | Pedigree associated to Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz |
+| **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot |
 
 **example_of_results** folder containing examples of result obtained with the dataset
 
 
 <br /><br />
 ## HOW TO RUN
-
-See Protocol 136 (ask me).
-
-
-### If error message
-
-If an error message appears, like:
-```
-Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
-```
-Purge using:
-```
-rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
-```
 
 
 ### From local using the committed version on gitlab
@@ -125,10 +111,19 @@ See chmod in protocol 44.
 Like above but then run the following command from here \\wsl$\Ubuntu-20.04\home\gael:
 
 ```bash
-nextflow run vcf_slivar_extraction.nf -C vcf_slivar_extraction.config
+nextflow run fisher_for_vcf.nf -C fisher_for_vcf.config
 ```
 
 with -C to specify the name of the config file used.
+
+If an error message appears, like:
+```
+Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
+```
+Purge using:
+```
+rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
+```
 
 
 ### From a cluster using a committed version on gitlab
@@ -157,7 +152,7 @@ Then run:
 
 ```bash
 # distant main.nf file
-/fisher_for_vcf/" ; nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r v1.0 -c $HOME/nextflow.config ; HOME="/pasteur/appa/homes/gmillot/"
+/fisher_for_vcf/" ; nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r v1.0 -c $HOME/fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"
 
 # local main.nf file ($HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/. See NFX_HOME in the nextflow soft script)
 HOME="$ZEUSHOME/fisher_for_vcf/" ; nextflow run --modules ${MODULES} fisher_for_vcf.nf -c fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"
@@ -192,11 +187,10 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 | **impact** | Impact of the alternative allele from VEP (*IMPACT* field) |
 | **aff** | Count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases. Example: {0:4, 1:2} for 4 cases HOM_REF and 2 cases HET |
 | **una** | as in *aff* in the unaffected cases |
-| **OR** | Odds ratio (n11/n12)/(n21/n22) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /></li><li>n12 = nHOM_REF_aff<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /></li><li>n22 = nHOM_REF_unaff<br /></li>
-OR > 1 meaning OR in favor of HET+HOM_ALT/aff |
+| **OR** | Odds ratio (n11/n12)/(n21/n22) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /></li><li>n12 = nHOM_REF_aff<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /></li><li>n22 = nHOM_REF_unaff<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff |
 | **p-value** | p-value of the exact fisher test |
 | **-log10(pval)** | -log10 of the p-value |
-| **AN** |  |
+| **AN** | Number of cases |
 
 
 <br /><br />
