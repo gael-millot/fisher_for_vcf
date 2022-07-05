@@ -75,6 +75,7 @@ if(interactive() == FALSE){ # if(grepl(x = commandArgs(trailingOnly = FALSE), pa
         "fisher", 
         "chr", 
         "y.lim1", 
+        "x.lim", 
         "y.lim2",
         "cute", 
         "log"
@@ -102,10 +103,22 @@ rm(tempo.cat)
 
 # fisher <- "C:/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/fisher.tsv"
 # chr <- "C:/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/hg19_grch37p5_chr_size_cumul.txt"
+# x.lim <- "whole"
 # y.lim1 <- 5
 # y.lim2 <- 3
 # cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
 # log <- "report.txt"
+
+fisher <- "C:/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/fisher.tsv"
+chr <- "C:/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/hg19_grch37p5_chr_size_cumul.txt"
+x.lim <- "whole"
+y.lim1 <- 5 
+y.lim2 <- 3
+cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
+log <- "report.txt"
+
+
+
 
 ################################ end Test
 
@@ -120,6 +133,7 @@ param.list <- c(
     if(run.way == "SCRIPT"){"command"}, 
     "fisher", 
     "chr", 
+    "x.lim",
     "y.lim1", 
     "y.lim2",
     "cute", 
@@ -225,6 +239,7 @@ ee <- expression(arg.check <- c(arg.check, tempo$problem) , text.check <- c(text
 tempo <- fun_check(data = fisher, class = "vector", typeof = "character", length = 1) ; eval(ee)
 tempo <- fun_check(data = chr, class = "vector", typeof = "character", length = 1) ; eval(ee)
 # tempo <- fun_check(data = cute, class = "vector", typeof = "character", length = 1) ; eval(ee) # check above
+tempo <- fun_check(data = x.lim, options = c("whole", "region"), length = 1) ; eval(ee)
 if(length(y.lim1) != 1 & any(grepl(y.lim1, pattern = "\\D"))){# normally no NA with is.null()
     tempo.cat <- paste0("ERROR IN global_logo.R:\nTHE y_lim1 PARAMETER MUST BE A SINGLE INTEGER\nHERE IT IS: \n", paste0(y.lim1, collapse = " "))
     stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
@@ -249,6 +264,7 @@ if(any(arg.check) == TRUE){ # normally no NA
 tempo.arg <-c(
     "fisher",
     "chr", 
+    "x.lim", 
     "y.lim1", 
     "y.lim2",
     "log"
@@ -353,6 +369,11 @@ if(length(obs) > 0 & nrow(obs) > 0){
     obs <- data.frame(obs, coord = vector(mode = "numeric", length = nrow(obs)))
     for(i1 in chr$CHR_NB){
         obs$coord[obs$chr == i1] <- obs$position[obs$chr == i1] + chr$LENGTH_CUMUL_TO_ADD[i1]
+    }
+    if(x.lim == "region"){
+        any(grepl(x = obs$chr, pattern = "^MT$|^M$")))
+        strsplit()
+
     }
 }else{
     tempo.warn <- paste0("EMPTY fisher FILE: NO PLOT DRAWN")

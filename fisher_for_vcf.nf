@@ -166,6 +166,7 @@ process miamiplot {
     input:
     file fisher from fisher_ch3
     file chr from chr_ch
+    val x_lim
     val y_lim1
     val y_lim2
     file cute_file
@@ -177,7 +178,7 @@ process miamiplot {
     script:
     """
     #!/bin/bash -ue
-    miami.R ${fisher} ${chr} "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
+    miami.R ${fisher} ${chr} "${x_lim}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
     """
 
 }

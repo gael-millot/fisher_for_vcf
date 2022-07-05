@@ -232,6 +232,11 @@ Gitlab developers
 <br /><br />
 ## WHAT'S NEW IN
 
+### v1.1
+
+1) Miami plot improvement
+
+
 ### v1.0
 
 1) everything
