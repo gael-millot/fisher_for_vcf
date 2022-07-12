@@ -139,7 +139,7 @@ def fisher(v, columns):
         oddsratio, pvalue = stats.fisher_exact([[aff.get(1,0)+aff.get(3,0),aff.get(0,0)],[una.get(1,0)+una.get(3,0),una.get(0,0)]])
 
         # je met a jour ma dataframe avec les info du variant courant v
-        df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = columns)
+        df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, v.INFO, gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = columns)
 
     return df2
 
@@ -210,7 +210,7 @@ with open(ped, 'r') as pin:
 # {'IP00FN5': 2, 'IP00FLK': 2, 'IP00FLT': 1, 'IP00FM2': 2, 'IP00FMC': 1}
 
 # header de la dataframe produite avec les Fisher et dataframe vide
-columns=['chr','position','ref','alt','gene','severity','impact','aff','una','OR','p-value','-log10(pval)','AN']
+columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB']
 df = pd.DataFrame(columns=columns)
 
 # le fichier vcf contenant les data des individus que l'on etudie

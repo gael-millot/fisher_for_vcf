@@ -53,10 +53,13 @@ vcf_ch = Channel.fromPath("${sample_path}", checkIfExists: false) // I could use
 tbi_ch = Channel.fromPath("${sample_path}.tbi", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 ped_ch = Channel.fromPath("${ped_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 chr_ch = Channel.fromPath("${chr_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-if(region == 'None'){
+// below is for parallelization of the fisher process
+if(region == 'none'){
+    region_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
     region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM") // .split(",") split according to comma and create a tuple
 }else{
     //String[] tempo
+    region_val = region
     tempo = region.split(",") // .split(",") split according to comma and create an array https://www.tutorialspoint.com/groovy/groovy_split.htm
     region_ch = Channel.from(tempo) 
 }
@@ -134,13 +137,11 @@ process fisher {
     //publishDir path: "${out_path}", mode: 'copy', overwrite: false
     cache 'true'
 
-    //no channel input here for the vcf, because I do not transform it
     input:
     tuple val(region2), file(vcf) from region_ch.combine(vcf_ch) // parallelization expected for each value of region_ch
     //file vcf from vcf_ch
     file ped from ped_ch.first()
     file tbi from tbi_ch.first()
-    //val region2 from region_ch
 
     output:
     file "*.tsv" into fisher_ch1 // multi channel
@@ -152,8 +153,9 @@ process fisher {
     """
 }
 
-fisher_ch1.collectFile(name: "fisher.tsv", skip:1, keepHeader:true).into{fisher_ch2 ; fisher_ch3}
+fisher_ch1.collectFile(name: "fisher.tsv", skip:1, keepHeader:true).into{fisher_ch2 ; fisher_ch3 ; fisher_ch4}
 fisher_ch2.subscribe{it -> it.copyTo("${out_path}")}
+
 
 
 process miamiplot {
@@ -162,10 +164,10 @@ process miamiplot {
     publishDir "${out_path}/reports", mode: 'copy', pattern: "{miami_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
-    //no channel input here for the vcf, because I do not transform it
     input:
     file fisher from fisher_ch3
     file chr from chr_ch
+    val region_val
     val x_lim
     val y_lim1
     val y_lim2
@@ -178,11 +180,46 @@ process miamiplot {
     script:
     """
     #!/bin/bash -ue
-    miami.R ${fisher} ${chr} "${x_lim}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
+    miami.R ${fisher} ${chr} "${region_val}" "${x_lim}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
     """
-
 }
 
+
+process tsv2vcf {
+    label 'bash' // see the withLabel: bash in the nextflow config file 
+    publishDir "${out_path}", mode: 'copy', pattern: "{*.vcf}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    cache 'true'
+
+    input:
+    file fisher from fisher_ch4
+
+    output:
+    file "res.vcf"
+
+    script:
+    """
+    #!/bin/bash -ue
+    PREHEADER='##fileformat=VCFv4.1;build by fisher_for_vcf.nf'
+    HEADER='#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO'
+    echo -e \$PREHEADER > res.vcf
+    awk -v var1=\$HEADER 'BEGIN{FS="\\t" ; OFS="" ; ORS=""}
+        NR==1{
+            print "##WARNING: 5 first names of the header of the initial file: "\$1" "\$2" "\$3" "\$4" "\$5"\\n" ;
+            print "##WARNING: if the 5 first columns of the .tsv file are not CHROM POS REF ALT INFO, then the .vcf file produced by this process is not good\\n" ;
+            print "##FORMAT=<FISHER=" ;
+            for(i=6;i<=NF;i++){print \$i ; if(i < NF){print "|"}} ;
+            print ">\\n" ;
+            print var1"\\n"
+        }
+        NR > 1{
+            gsub("[\\\\[\\\\]\\'"'"']", "", \$4)
+            print \$1"\\t"\$2"\\t.\\t"\$3"\\t"\$4"\\t.\\t.\\t"\$5";FISHER=" ;
+            for(i=6;i<=NF;i++){print \$i ; if(i < NF){print "|"}} ;
+            print "\\n"
+        }
+    ' ${fisher} >> res.vcf
+    """
+}
 
 
 process Backup {
@@ -201,7 +238,7 @@ process Backup {
 
     script:
     """
-    echo -e "full .nextflow.log is in: ${launchDir}\nThe one in the result folder is not complete (miss the end)" > Log_info.txt
+    echo -e "full .nextflow.log is in: ${launchDir}\\nThe one in the result folder is not complete (miss the end)" > Log_info.txt
     """
 }
 
