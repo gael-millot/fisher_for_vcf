@@ -177,19 +177,22 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 
 | Column | Description |
 | --- | --- |
-| **chr** | Chromosome name |
-| **position** | Position on the chromosome (in bp) |
-| **ref** | Reference allele sequence |
-| **alt** | Alternative allele (ALT) sequence |
-| **gene** | Gene name |
-| **severity** | Severity of the alternative allele from VEP (*consequence* field) |
-| **impact** | Impact of the alternative allele from VEP (*IMPACT* field) |
-| **aff** | Count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases. Example: {0:4, 1:2} for 4 cases HOM_REF and 2 cases HET |
-| **una** | as in *aff* in the unaffected cases |
-| **OR** | Odds ratio (n11/n12)/(n21/n22) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /></li><li>n12 = nHOM_REF_aff<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /></li><li>n22 = nHOM_REF_unaff<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff |
-| **p-value** | p-value of the exact fisher test |
-| **-log10(pval)** | -log10 of the p-value |
-| **AN** | Number of cases |
+| **CHROM** | Chromosome name |
+| **POS** | Position on the chromosome (in bp) |
+| **REF** | Reference allele sequence |
+| **ALT** | Alternative allele (ALT) sequence |
+| **INFO** | INFO field of the vcf |
+| **GENE** | Gene name |
+| **SEVERITY** | Severity of the alternative allele from VEP (*consequence* field) |
+| **IMPACT** | Impact of the alternative allele from VEP (*IMPACT* field) |
+| **AFF** | Count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases. Example: {0:4, 1:2} for 4 cases HOM_REF and 2 cases HET |
+| **UNAFF** | as in *aff* in the unaffected cases |
+| **OR** | Odds ratio (n11/n12)/(n21/n22) = (n11\*n22)/(n12\*n21) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /></li><li>n12 = nHOM_REF_aff<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /></li><li>n22 = nHOM_REF_unaff<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff |
+| **P_VALUE** | p-value of the exact fisher test |
+| **NEG_LOG10_P_VALUE** | -log10 of the p-value |
+| **PATIENT_NB** | Number of cases |
+
+**res.vcf** reconstituted vcf file from the tsv file, with FISHER field at the end of the INFO field. See the header of the vcf file for FISHER field description
 
 
 <br /><br />
@@ -231,6 +234,11 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v1.3
+
+1) INFO column added in the .tsv file
+
 
 ### v1.2
 

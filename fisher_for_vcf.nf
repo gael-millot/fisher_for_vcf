@@ -58,10 +58,16 @@ if(region == 'none'){
     region_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
     region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM") // .split(",") split according to comma and create a tuple
 }else{
-    //String[] tempo
-    region_val = region
-    tempo = region.split(",") // .split(",") split according to comma and create an array https://www.tutorialspoint.com/groovy/groovy_split.htm
-    region_ch = Channel.from(tempo) 
+    region_val = region // value for the miami plot
+    if(region =~ /,/){
+        tempo = region.replaceAll(':.+,', ',')
+    }else{
+        tempo = region
+    }
+    tempo2 = tempo.replaceAll(':.+$', '')
+    tempo3 = tempo2.replaceAll(' ', '')
+    tempo4 = tempo3.split(",") // .split(",") split according to comma and create an array https://www.tutorialspoint.com/groovy/groovy_split.htm
+    region_ch = Channel.from(tempo4) 
 }
 
 //// end used once
@@ -206,7 +212,7 @@ process tsv2vcf {
         NR==1{
             print "##WARNING: 5 first names of the header of the initial file: "\$1" "\$2" "\$3" "\$4" "\$5"\\n" ;
             print "##WARNING: if the 5 first columns of the .tsv file are not CHROM POS REF ALT INFO, then the .vcf file produced by this process is not good\\n" ;
-            print "##FORMAT=<FISHER=" ;
+            print "##INFO=<FISHER=" ;
             for(i=6;i<=NF;i++){print \$i ; if(i < NF){print "|"}} ;
             print ">\\n" ;
             print var1"\\n"

@@ -139,7 +139,7 @@ def fisher(v, columns):
         oddsratio, pvalue = stats.fisher_exact([[aff.get(1,0)+aff.get(3,0),aff.get(0,0)],[una.get(1,0)+una.get(3,0),una.get(0,0)]])
 
         # je met a jour ma dataframe avec les info du variant courant v
-        df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, v.INFO, gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = columns)
+        df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i[0]+"="+str(i[1]) for i in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = columns)
 
     return df2
 
@@ -221,6 +221,7 @@ vcf = VCF(vcf_path) # import the VCF as it is. But this tool as the advantage to
 #     w = Writer('./vcf.tsv', vcf) # https://brentp.github.io/cyvcf2/docstrings.html
 #     w.write_record(v)
 #     w.close()
+# the INFO field of the VCF is a dict
 
 
 ################ end Data import

@@ -458,6 +458,9 @@ if(length(obs) > 0 & nrow(obs) > 0){
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot(obs, aes_string(x = "coord", y = "NEG_LOG10_P_VALUE")))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes(color=as.factor(CHROM)), alpha=0.5, size=1))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::ggtitle(
+        paste0("region: ", region, ", x.lim: ", x.lim, ", y.lim1: ", y.lim1, ", y.lim2: ", y.lim2)
+        ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_x_continuous(
         expand = c(0, 0), # remove space after after axis limits
         oob = scales::rescale_none,
@@ -473,6 +476,7 @@ if(length(obs) > 0 & nrow(obs) > 0){
     ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme_bw())
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme(
+        plot.title = ggplot2::element_text(size = 8), 
         legend.position="none",
         panel.border = element_blank(),
         panel.grid.major.x = element_blank(),
