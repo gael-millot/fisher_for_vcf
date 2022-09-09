@@ -24,10 +24,12 @@
 <br /><br />
 ## AIM
 
-Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a tsv file and a Miami plot.
+
+Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a tsv file and a Miami plot.<br />The tsv file includes all fields and sub-fields of the vcf file in different columns. For instance 
 
 <br /><br />
 ## CONTENT
+
 
 **fisher_for_vcf.nf** File that can be executed using a CLI (command line interface)
 
@@ -169,6 +171,7 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 <br /><br />
 ## OUTPUT
 
+
 **reports** folder containing all the reports of the different processes including the **fisher_for_vcf.config** file used
 
 **Miami.png** miami plot in the .png format
@@ -234,6 +237,11 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v1.4
+
+1) now the script deals with .gz and non .gz vcf
+
 
 ### v1.3
 

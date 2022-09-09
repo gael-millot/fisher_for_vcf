@@ -49,8 +49,8 @@ chr_path_test = file("${chr_path}") // to test if exist below
 
 //// used once
 
-vcf_ch = Channel.fromPath("${sample_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-tbi_ch = Channel.fromPath("${sample_path}.tbi", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
+Channel.fromPath("${sample_path}", checkIfExists: false).into{vcf_ch1 ; vcf_ch2} // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
+tbi_ch = Channel.fromPath("${sample_path}.tbi", checkIfExists: false) // Even if does not exist, it works. I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 ped_ch = Channel.fromPath("${ped_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 chr_ch = Channel.fromPath("${chr_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 // below is for parallelization of the fisher process
@@ -82,10 +82,11 @@ if(system_exec == 'local' || system_exec == 'slurm'){
     def file_exists1 = sample_path_test.exists()
     if( ! file_exists1){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }
-    def file_exists2 = tbi_path_test.exists()
-    if( ! file_exists2){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+    }else if(sample_path_test =~ /.*\.gz$/){
+        def file_exists2 = tbi_path_test.exists()
+        if( ! file_exists2){
+            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
+        }
     }
     def file_exists3 = ped_path_test.exists()
     if( ! file_exists3){
@@ -144,7 +145,7 @@ process fisher {
     cache 'true'
 
     input:
-    tuple val(region2), file(vcf) from region_ch.combine(vcf_ch) // parallelization expected for each value of region_ch
+    tuple val(region2), file(vcf) from region_ch.combine(vcf_ch1) // parallelization expected for each value of region_ch
     //file vcf from vcf_ch
     file ped from ped_ch.first()
     file tbi from tbi_ch.first()
@@ -175,6 +176,8 @@ process miamiplot {
     file chr from chr_ch
     val region_val
     val x_lim
+    val bottom_y_column
+    val color_column
     val y_lim1
     val y_lim2
     file cute_file
@@ -186,7 +189,7 @@ process miamiplot {
     script:
     """
     #!/bin/bash -ue
-    miami.R ${fisher} ${chr} "${region_val}" "${x_lim}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
+    miami.R ${fisher} ${chr} "${region_val}" "${x_lim}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
     """
 }
 
@@ -197,6 +200,7 @@ process tsv2vcf {
     cache 'true'
 
     input:
+    file vcf from vcf_ch2
     file fisher from fisher_ch4
 
     output:
@@ -205,9 +209,28 @@ process tsv2vcf {
     script:
     """
     #!/bin/bash -ue
-    PREHEADER='##fileformat=VCFv4.1;build by fisher_for_vcf.nf'
+    PREHEADER='##fileformat=VCFv4.2;build by fisher_for_vcf.nf\\n##WARNING: This file is not a true VCF since FORMAT AND sample (indiv) columns are not present'
     HEADER='#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO'
     echo -e \$PREHEADER > res.vcf
+    FILENAME=\$(basename -- "${vcf}") # recover a file name without path
+    FILE_EXTENSION="\${FILENAME##*.}" #  ## means "delete the longest regex starting at the beginning of the tested string". If nothing, delete nothing. Thus ##*. means delete the longest string finishing by a dot. Use # instead of ## for "delete the shortest regex starting at the beginning of the tested string"
+    if [[ "\${FILE_EXTENSION}" =~ gz ]] ; then
+        zcat ${vcf} | awk '{
+            if(\$0 ~ "^##.*"){
+                print \$0
+            }else{
+                exit 0
+            }
+        }' >> res.vcf
+    else
+        awk '{
+            if(\$0 ~ "^##.*"){
+                print \$0
+            }else{
+                exit 0
+            }
+        }' ${vcf} >> res.vcf
+    fi
     awk -v var1=\$HEADER 'BEGIN{FS="\\t" ; OFS="" ; ORS=""}
         NR==1{
             print "##WARNING: 5 first names of the header of the initial file: "\$1" "\$2" "\$3" "\$4" "\$5"\\n" ;

@@ -1,6 +1,0 @@
-task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
-1	35/3652f9	2247	WorkflowVersion	COMPLETED	0	2022-09-07 23:56:36.107	964ms	309ms	18.0%	3.1 MB	19.2 MB	133.5 KB	1.5 KB
-2	c5/056ed0	2451	fisher (1)	COMPLETED	0	2022-09-07 23:56:37.084	57s	56.5s	70.5%	186.2 MB	1.4 GB	16.5 MB	12.5 MB
-3	06/d397e3	3661	Backup	COMPLETED	0	2022-09-07 23:57:34.060	641ms	7ms	9.7%	0	0	104 KB	329 B
-4	84/3b58f1	3798	tsv2vcf (1)	COMPLETED	0	2022-09-07 23:57:34.712	2.8s	2.2s	27.4%	6.3 MB	42.2 MB	12.6 MB	12.6 MB
-5	12/5ea10e	4063	miamiplot (1)	COMPLETED	0	2022-09-07 23:57:37.539	4.4s	3.9s	58.8%	172.9 MB	311.4 MB	26.7 MB	87.3 KB

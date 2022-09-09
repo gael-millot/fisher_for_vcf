@@ -76,6 +76,8 @@ if(interactive() == FALSE){ # if(grepl(x = commandArgs(trailingOnly = FALSE), pa
         "chr.path", 
         "region", 
         "x.lim", 
+        "bottom.y.column",
+        "color.column",
         "y.lim1", 
         "y.lim2", 
         "cute", 
@@ -106,6 +108,8 @@ rm(tempo.cat)
 # chr.path <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
 # region <- "chr1:0-50000, chr3:0-150000"
 # x.lim <- "region"
+# bottom.y.column <- 
+# color.column <- 
 # y.lim1 <- 5
 # y.lim2 <- 3
 # cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
@@ -128,6 +132,8 @@ param.list <- c(
     "chr.path", 
     "region", 
     "x.lim", 
+    "bottom.y.column",
+    "color.column",
     "y.lim1", 
     "y.lim2",
     "cute", 
@@ -217,6 +223,33 @@ for(i in 1:length(req.package.list)){suppressMessages(library(req.package.list[i
 # fun_pack(req.package = req.package.list, load = TRUE, lib.path = NULL) # packages are imported even if inside functions are written as package.name::function() in the present code
 
 
+
+
+
+vcf.scan <- function(){
+    goon <- TRUE
+    count <- 0
+    info.subfield.name <- NULL
+
+    while(goon == TRUE){
+        count <- count + 1
+        tempo <- scan("C:\\Users\\gael\\Documents\\Git_projects\\fisher_for_vcf\\dataset\\Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf", what = "list", sep = '\n', skip = count, nlines = 1, quiet = TRUE)
+        if(grepl(tempo, pattern = "^##INFO=<ID=.*")){
+            tempo.right <- sub(x = tempo, pattern = "^##INFO=<ID=", replacement = "")
+            tempo.left <- sub(x = tempo.right, pattern = ",.*$", replacement = "")
+            info.subfield.name <- c(info.subfield.name, tempo.left)
+        }
+        if( ! grepl(tempo, pattern = "^#.*")){ # because a vcf always starts by #
+            goon <- FALSE
+        }
+        # add special split for CSQ
+    }
+    # add check with bottom.y.column
+    return(info.subfield.name)
+}
+
+
+
 ################################ End Functions
 
 
@@ -235,6 +268,16 @@ tempo <- fun_check(data = chr.path, class = "vector", typeof = "character", leng
 # tempo <- fun_check(data = cute, class = "vector", typeof = "character", length = 1) ; eval(ee) # check above
 tempo <- fun_check(data = region, class = "vector", typeof = "character", length = 1) ; eval(ee)
 tempo <- fun_check(data = x.lim, options = c("whole", "region"), length = 1) ; eval(ee)
+if(all(bottom.y.column != "NULL")){
+    tempo <- fun_check(data = bottom.y.column, class = "vector", typeof = "character", length = 1) ; eval(ee)
+}else{
+    bottom.y.column <- NULL
+}
+if(all(color.column != "NULL")){
+    tempo <- fun_check(data = color.column, class = "vector", typeof = "character", length = 1) ; eval(ee)
+}else{
+    color.column <- NULL
+}
 if(all(y.lim1 == "NULL")){
     y.lim1 = NA
 }else if(length(y.lim1) != 1 & any(grepl(y.lim1, pattern = "\\D"))){# normally no NA with is.null()
@@ -457,7 +500,12 @@ if(length(obs) > 0 & nrow(obs) > 0){
     tempo.gg.count <- 0
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot(obs, aes_string(x = "coord", y = "NEG_LOG10_P_VALUE")))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes(color=as.factor(CHROM)), alpha=0.5, size=1))
-    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+    if(is.null(color.column)){
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+    }else{
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+    }
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::ggtitle(
         paste0("region: ", region, ", x.lim: ", x.lim, ", y.lim1: ", y.lim1, ", y.lim2: ", y.lim2)
         ))
@@ -492,41 +540,48 @@ if(length(obs) > 0 & nrow(obs) > 0){
         size = 1
     ))
 
-
     fin.plot1 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name, 1:tempo.gg.count), collapse = " + ")))))
 
-    tempo.gg.name2 <- "gg.indiv.plot."
-    tempo.gg.count2 <- 0
-    assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), ggplot(obs, aes_string(x = "coord", y = "OR")))
-    assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes(color=as.factor(CHROM)), alpha=0.5, size=1))
-    assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
-    assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_x_continuous(
-        expand = c(0, 0), # remove space after after axis limits
-        oob = scales::rescale_none,
-        label = chr$CHR_NAME, 
-        breaks= chr$CHR_NAME_POS, 
-        limits = c(xmin_plot - marging, max(chr$LENGTH_CUMUL) + marging)
-    ))
-    assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
-        expand = c(0, 0), # remove space after after axis limits
-        limits = c(y.lim2, 0), # NA indicate that limits must correspond to data limits but ylim() already used
-        oob = scales::rescale_none, 
-        trans = "reverse" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
-    ))
-    assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme_bw())
-    assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme(
-        legend.position="none",
-        panel.border = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()
-    ))
-    fin.plot2 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name2, 1:tempo.gg.count2), collapse = " + ")))))
+    if(is.null(bottom.y.column)){
+        suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, ncol=1, nrow = 1)))
+    }else{
+        tempo.gg.name2 <- "gg.indiv.plot."
+        tempo.gg.count2 <- 0
+        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), ggplot(obs, aes_string(x = "coord", y = bottom.y.column)))
+        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes(color=as.factor(CHROM)), alpha=0.5, size=1))
+        if(is.null(color.column)){
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+        }else{
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+        }
+        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_x_continuous(
+            expand = c(0, 0), # remove space after after axis limits
+            oob = scales::rescale_none,
+            label = chr$CHR_NAME, 
+            breaks= chr$CHR_NAME_POS, 
+            limits = c(xmin_plot - marging, max(chr$LENGTH_CUMUL) + marging)
+        ))
+        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
+            expand = c(0, 0), # remove space after after axis limits
+            limits = c(y.lim2, 0), # NA indicate that limits must correspond to data limits but ylim() already used
+            oob = scales::rescale_none, 
+            trans = "reverse" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+        ))
+        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme_bw())
+        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme(
+            legend.position="none",
+            panel.border = element_blank(),
+            panel.grid.major.x = element_blank(),
+            panel.grid.minor.x = element_blank(),
+            axis.title.x=element_blank(),
+            axis.text.x=element_blank(),
+            axis.ticks.x=element_blank()
+        ))
+        fin.plot2 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name2, 1:tempo.gg.count2), collapse = " + ")))))
 
-    suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, fin.plot2, ncol=1, nrow = 2)))
-
+        suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, fin.plot2, ncol=1, nrow = 2)))
+    }
 }else{
     fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\n", ifelse(x.lim == "region" | region == "none", "THE region OR x_lim PARAMETERS\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE")))
 }
