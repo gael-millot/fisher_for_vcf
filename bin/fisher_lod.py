@@ -51,6 +51,7 @@ import warnings # for warnings.catch_warnings()
 
 ################################ Parameters that need to be set by the user
 
+tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB']
 
 ################################ End Parameters that need to be set by the user
 
@@ -61,6 +62,8 @@ import warnings # for warnings.catch_warnings()
 vcf_path = sys.argv[1]  # 1st argument: pedigree file name, 1 ID par ligne, sys.argv takes arguments from the bash line command when running a .py script
 ped = sys.argv[2]
 region = sys.argv[3]
+vcf_info_field_titles_path = sys.argv[4]
+tsv_extra_fields = sys.argv[5]
 
 
 ################################ End Config import
@@ -88,19 +91,21 @@ region = sys.argv[3]
 ################################ Functions
 
 
-def fisher(v, columns):
+def fisher(v, tsv_columns, tsv_extra_fields):
     '''
     AIM
         parse vcf and compute fisher
     WARNINGS
     ARGUMENTS
         v: a vcf object from VCF()
+        tsv_columns: column names of the final tsv file
+        tsv_extra_fields: subfields of INFO field of the vcf to add as column in the tsv
     RETURN
         a data frame
     REQUIRED PACKAGES
         None
     EXAMPLE
-        fisher(v = vcf, columns = columns)
+        fisher(v = vcf, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
     DEBUGGING
         v = vcf
     '''
@@ -109,7 +114,7 @@ def fisher(v, columns):
     # dans chaque dictionaire j'associerai a un genotype (clef) un nombre d'individu.
     aff=dict() #dictionary: return of this is {1:0, 2:0, } with key:value each element of the dict (key -> integers by default)
     una=dict()
-    df2 = pd.DataFrame(columns=columns)
+    df2 = pd.DataFrame(columns = tsv_columns)
     # je traite tous les variants qui ont un champ CSQ (annotation VEP)
     if v.INFO.get('CSQ') is not None: # https://www.w3schools.com/python/ref_dictionary_get.asp
         # je recupere quelques annotations
@@ -139,9 +144,16 @@ def fisher(v, columns):
         oddsratio, pvalue = stats.fisher_exact([[aff.get(1,0)+aff.get(3,0),aff.get(0,0)],[una.get(1,0)+una.get(3,0),una.get(0,0)]])
 
         # je met a jour ma dataframe avec les info du variant courant v
-        df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i[0]+"="+str(i[1]) for i in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = columns)
+        df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i[0]+"="+str(i[1]) for i in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], tsv_columns = tsv_columns)
+    # add extra columns coming from tsv_extra_fields into the tsv file
+    if all([i1 == "NULL" for i1 in tsv_extra_fields]) is not True:
+        for i2 in tsv_extra_fields:
+            globals()[i2] = v.INFO.get(i2)
 
-    return df2
+        df3 = pd.DataFrame([[tsv_extra_fields]], columns = tsv_extra_fields)
+
+    df4=pd.concat([df2.reset_index(drop = True), df3], axis = 1)
+    return df4
 
 
 ################################ End Functions
@@ -210,8 +222,7 @@ with open(ped, 'r') as pin:
 # {'IP00FN5': 2, 'IP00FLK': 2, 'IP00FLT': 1, 'IP00FM2': 2, 'IP00FMC': 1}
 
 # header de la dataframe produite avec les Fisher et dataframe vide
-columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB']
-df = pd.DataFrame(columns=columns)
+df = pd.DataFrame(columns=tsv_columns)
 
 # le fichier vcf contenant les data des individus que l'on etudie
 # attention doit etre bgzippé (.gz) et avoir un index tabix (.tbi)
@@ -223,11 +234,18 @@ vcf = VCF(vcf_path) # import the VCF as it is. But this tool as the advantage to
 #     w.close()
 # the INFO field of the VCF is a dict
 
+with open(vcf_info_field_titles_path, 'r') as f:
+    vcf_info_field_titles = f.readlines()[0].split(' ')
 
 ################ end Data import
 
 
 ############ modifications of imported tables
+
+
+if all([i0 in vcf_info_field_titles for i0 in tsv_extra_fields]) is not True:
+    sys.exit("Error in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n")
+
 
 with warnings.catch_warnings():
     # https://docs.python.org/3/library/warnings.html#warning-categories
@@ -243,7 +261,7 @@ with warnings.catch_warnings():
 #                df = df.append(tempo)
     for v in vcf: # parse each line of vcf with the content of region in it
         if v.CHROM == region:
-            tempo = fisher(v = v, columns = columns)
+            tempo = fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
             df = df.append(tempo)
 
 # on ecrit la dataframe dans un fichier

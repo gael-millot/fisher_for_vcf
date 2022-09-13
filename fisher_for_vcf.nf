@@ -49,7 +49,7 @@ chr_path_test = file("${chr_path}") // to test if exist below
 
 //// used once
 
-Channel.fromPath("${sample_path}", checkIfExists: false).into{vcf_ch1 ; vcf_ch2} // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
+Channel.fromPath("${sample_path}", checkIfExists: false).into{vcf_ch1 ; vcf_ch2 ; vcf_ch3} // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 tbi_ch = Channel.fromPath("${sample_path}.tbi", checkIfExists: false) // Even if does not exist, it works. I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 ped_ch = Channel.fromPath("${ped_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 chr_ch = Channel.fromPath("${chr_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
@@ -138,6 +138,26 @@ process WorkflowVersion { // create a file with the workflow version in out_path
 //Note that variables like ${out_path} are interpreted in the script block
 
 
+process vcf_subfield_title {
+    label 'r_ext' // see the withLabel: bash in the nextflow config file
+    publishDir "${out_path}/reports", mode: 'copy', pattern: "{vcf_subfield_title.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    cache 'true'
+
+    input:
+    file vcf from vcf_ch1
+    file cute_file
+
+    output:
+    file "vcf_info_field_titles.txt" into vcf_info_field_titles_ch
+    file "vcf_csq_subfield_titles.txt" into vcf_csq_subfield_titles_ch
+
+    script:
+    """
+    #!/bin/bash -ue
+    vcf_subfield_title.R ${vcf} "${cute_file}" "miami_report.txt"
+    """
+}
+
 
 process fisher {
     label 'python' // see the withLabel: bash in the nextflow config file 
@@ -145,10 +165,12 @@ process fisher {
     cache 'true'
 
     input:
-    tuple val(region2), file(vcf) from region_ch.combine(vcf_ch1) // parallelization expected for each value of region_ch
-    //file vcf from vcf_ch
+    tuple val(region2), file(vcf) from region_ch.combine(vcf_ch2) // parallelization expected for each value of region_ch
     file ped from ped_ch.first()
     file tbi from tbi_ch.first()
+    file vcf_info_field_titles from vcf_info_field_titles_ch
+    file vcf_csq_subfield_titles from vcf_csq_subfield_titles_ch
+    val tsv_extra_fields
 
     output:
     file "*.tsv" into fisher_ch1 // multi channel
@@ -156,7 +178,7 @@ process fisher {
     script:
     """
     #!/bin/bash -ue
-    fisher_lod.py ${vcf} ${ped} "${region2}"
+    fisher_lod.py ${vcf} ${ped} "${region2}" ${vcf_info_field_titles} "${tsv_extra_fields}"
     """
 }
 
@@ -164,8 +186,7 @@ fisher_ch1.collectFile(name: "fisher.tsv", skip:1, keepHeader:true).into{fisher_
 fisher_ch2.subscribe{it -> it.copyTo("${out_path}")}
 
 
-
-process miamiplot {
+process miami_plot {
     label 'r_ext' // see the withLabel: bash in the nextflow config file 
     publishDir "${out_path}", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     publishDir "${out_path}/reports", mode: 'copy', pattern: "{miami_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
@@ -200,7 +221,7 @@ process tsv2vcf {
     cache 'true'
 
     input:
-    file vcf from vcf_ch2
+    file vcf from vcf_ch3
     file fisher from fisher_ch4
 
     output:

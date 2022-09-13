@@ -209,9 +209,9 @@ if( ! is.null(tempo)){
 }
 # end required function checking
 
+################ end import functions from cute little functions toolbox
 
 ################ local function: package import
-
 
 # R Packages required
 req.package.list <- c(
@@ -222,33 +222,11 @@ req.package.list <- c(
 for(i in 1:length(req.package.list)){suppressMessages(library(req.package.list[i], character.only = TRUE))}
 # fun_pack(req.package = req.package.list, load = TRUE, lib.path = NULL) # packages are imported even if inside functions are written as package.name::function() in the present code
 
+################ end local function: package import
 
+################ other functions
 
-
-
-vcf.scan <- function(){
-    goon <- TRUE
-    count <- 0
-    info.subfield.name <- NULL
-
-    while(goon == TRUE){
-        count <- count + 1
-        tempo <- scan("C:\\Users\\gael\\Documents\\Git_projects\\fisher_for_vcf\\dataset\\Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf", what = "list", sep = '\n', skip = count, nlines = 1, quiet = TRUE)
-        if(grepl(tempo, pattern = "^##INFO=<ID=.*")){
-            tempo.right <- sub(x = tempo, pattern = "^##INFO=<ID=", replacement = "")
-            tempo.left <- sub(x = tempo.right, pattern = ",.*$", replacement = "")
-            info.subfield.name <- c(info.subfield.name, tempo.left)
-        }
-        if( ! grepl(tempo, pattern = "^#.*")){ # because a vcf always starts by #
-            goon <- FALSE
-        }
-        # add special split for CSQ
-    }
-    # add check with bottom.y.column
-    return(info.subfield.name)
-}
-
-
+################ end other functions
 
 ################################ End Functions
 
@@ -376,8 +354,16 @@ if(erase.graphs == TRUE){
 ################ Data import
 
 
-obs <- read.table(fisher, sep = "\t", stringsAsFactors = FALSE, header = TRUE, comment.char = "")
-chr <- read.table(chr.path, sep = "\t", stringsAsFactors = FALSE, header = TRUE, comment.char = "")
+if( ! file.exists(fisher)){
+    stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE cute PARAMETER DOES NOT EXISTS: ", fisher, "\n\n============\n\n"), call. = FALSE)
+}else{
+    obs <- read.table(fisher, sep = "\t", stringsAsFactors = FALSE, header = TRUE, comment.char = "")
+}
+if( ! file.exists(chr.path)){
+    stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE cute PARAMETER DOES NOT EXISTS: ", chr.path, "\n\n============\n\n"), call. = FALSE)
+}else{
+    chr <- read.table(chr.path, sep = "\t", stringsAsFactors = FALSE, header = TRUE, comment.char = "")
+}
 
 
 ################ end Data import
