@@ -140,7 +140,7 @@ process WorkflowVersion { // create a file with the workflow version in out_path
 
 process vcf_subfield_title {
     label 'r_ext' // see the withLabel: bash in the nextflow config file
-    publishDir "${out_path}/reports", mode: 'copy', pattern: "{vcf_subfield_title.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out_path}", mode: 'copy', pattern: "{*.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
@@ -178,7 +178,7 @@ process fisher {
     script:
     """
     #!/bin/bash -ue
-    fisher_lod.py ${vcf} ${ped} "${region2}" ${vcf_info_field_titles} "${tsv_extra_fields}"
+    fisher_lod.py ${vcf} ${ped} "${region2}" ${vcf_info_field_titles} "${tsv_extra_fields}" "${vcf_csq_subfield_titles}"
     """
 }
 

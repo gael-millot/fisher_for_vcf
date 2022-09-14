@@ -38,6 +38,7 @@
 
 import csv
 import sys
+import re
 from cyvcf2 import VCF, Writer
 import scipy.stats as stats
 import pandas as pd
@@ -51,7 +52,7 @@ import warnings # for warnings.catch_warnings()
 
 ################################ Parameters that need to be set by the user
 
-tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB']
+
 
 ################################ End Parameters that need to be set by the user
 
@@ -64,6 +65,7 @@ ped = sys.argv[2]
 region = sys.argv[3]
 vcf_info_field_titles_path = sys.argv[4]
 tsv_extra_fields = sys.argv[5]
+vcf_csq_subfield_titles_path = sys.argv[6]
 
 
 ################################ End Config import
@@ -91,21 +93,24 @@ tsv_extra_fields = sys.argv[5]
 ################################ Functions
 
 
-def fisher(v, tsv_columns, tsv_extra_fields):
+def fisher(v, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfield_pos):
     '''
     AIM
-        parse vcf and compute fisher
+        compute fisher for a line of a vcf
     WARNINGS
     ARGUMENTS
-        v: a vcf object from VCF()
+        v: a single line of a vcf object from VCF()
         tsv_columns: column names of the final tsv file
-        tsv_extra_fields: subfields of INFO field of the vcf to add as column in the tsv
+        tsv_extra_fields_wo_csq: subfields of INFO field of the vcf to add as column in the tsv (excluding potential CSQ subfields like Polyphen)
+        csq_subfield_name: subfields of the CSQ subfield of the INFO field of the vcf to add as column in the tsv
+        csq_subfield_pos: positions of csq_subfield_name in the all the subfields of CSQ, indicated by vcf_csq_subfield_titles
     RETURN
-        a data frame
+        a data frame with a single row
     REQUIRED PACKAGES
         None
     EXAMPLE
-        fisher(v = vcf, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
+        for v in vcf:
+            fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
     DEBUGGING
         v = vcf
     '''
@@ -114,13 +119,11 @@ def fisher(v, tsv_columns, tsv_extra_fields):
     # dans chaque dictionaire j'associerai a un genotype (clef) un nombre d'individu.
     aff=dict() #dictionary: return of this is {1:0, 2:0, } with key:value each element of the dict (key -> integers by default)
     una=dict()
-    df2 = pd.DataFrame(columns = tsv_columns)
+    df3 = pd.DataFrame(columns = tsv_columns + csq_subfield_name + tsv_extra_fields_wo_csq)
+
+
     # je traite tous les variants qui ont un champ CSQ (annotation VEP)
     if v.INFO.get('CSQ') is not None: # https://www.w3schools.com/python/ref_dictionary_get.asp
-        # je recupere quelques annotations
-        gene = v.INFO.get('CSQ').split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
-        impact = v.INFO.get('CSQ').split('|')[1]
-        severity = v.INFO.get('CSQ').split('|')[2]
         # j'initialise une variable qui met permet de garder trace du nombre d'individus pour laquelle j'ai des information pour le variant v courant
         an=0 # nb of indiv
         # pour le variant actuel on parcours la liste des individus (iid) avec les genotype associé (gt), la depth (dp) et la genotyping quality (gq)
@@ -143,17 +146,43 @@ def fisher(v, tsv_columns, tsv_extra_fields):
         # ici c'est porteur (gt 1 ou 3) versus non porteur (gt 0) pour les atteints (aff) versus les non atteint (una)
         oddsratio, pvalue = stats.fisher_exact([[aff.get(1,0)+aff.get(3,0),aff.get(0,0)],[una.get(1,0)+una.get(3,0),una.get(0,0)]])
 
-        # je met a jour ma dataframe avec les info du variant courant v
-        df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i[0]+"="+str(i[1]) for i in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], tsv_columns = tsv_columns)
-    # add extra columns coming from tsv_extra_fields into the tsv file
-    if all([i1 == "NULL" for i1 in tsv_extra_fields]) is not True:
-        for i2 in tsv_extra_fields:
-            globals()[i2] = v.INFO.get(i2)
 
-        df3 = pd.DataFrame([[tsv_extra_fields]], columns = tsv_extra_fields)
+        tempo_csq = v.INFO.get('CSQ').split(',')
 
-    df4=pd.concat([df2.reset_index(drop = True), df3], axis = 1)
-    return df4
+
+################ here, get the csq_subfield_name info and if more than 1 -> several lines, per each value, else 
+
+
+
+        if len(csq_subfield_name) == 0:
+            gene = tempo_csq[0].split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
+            impact = tempo_csq[0].split('|')[1]
+            severity = tempo_csq[0].split('|')[2]
+            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = tsv_columns)
+            if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
+                for i4 in tsv_extra_fields_wo_csq:
+                    df2[i4] = v.INFO.get(i4)
+
+            df3 = df3.append(df2)
+
+        else:
+
+            count = 0
+            for i2 in tempo_csq:
+                count = count + 1 # CSQ subfield nb
+                gene = i2.split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
+                impact = i2.split('|')[1]
+                severity = i2.split('|')[2]
+
+                df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an, count]], columns = tsv_columns)
+
+            if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
+                for i4 in tsv_extra_fields_wo_csq:
+                    df2[i4] = v.INFO.get(i4)
+
+                df3 = df3.append(df2)
+
+    return df3
 
 
 ################################ End Functions
@@ -178,6 +207,7 @@ random.seed(1)
 # warn.count <- 0 # not required
 # end warning initiation
 # other checkings
+tsv_extra_fields = tsv_extra_fields.split(' ')
 # end other checkings
 # reserved word checking
 # end reserved word checking
@@ -221,9 +251,6 @@ with open(ped, 'r') as pin:
 # le dictionnaire ressemble a ca :
 # {'IP00FN5': 2, 'IP00FLK': 2, 'IP00FLT': 1, 'IP00FM2': 2, 'IP00FMC': 1}
 
-# header de la dataframe produite avec les Fisher et dataframe vide
-df = pd.DataFrame(columns=tsv_columns)
-
 # le fichier vcf contenant les data des individus que l'on etudie
 # attention doit etre bgzippé (.gz) et avoir un index tabix (.tbi)
 vcf = VCF(vcf_path) # import the VCF as it is. But this tool as the advantage to extract easily, using INFO, etc., see https://brentp.github.io/cyvcf2/docstrings.html
@@ -232,21 +259,59 @@ vcf = VCF(vcf_path) # import the VCF as it is. But this tool as the advantage to
 #     w = Writer('./vcf.tsv', vcf) # https://brentp.github.io/cyvcf2/docstrings.html
 #     w.write_record(v)
 #     w.close()
-# the INFO field of the VCF is a dict
+# the INFO field of the VCF isis a complex object
+
 
 with open(vcf_info_field_titles_path, 'r') as f:
     vcf_info_field_titles = f.readlines()[0].split(' ')
+
+with open(vcf_csq_subfield_titles_path, 'r') as f:
+    vcf_csq_subfield_titles = f.readlines()[0].split(' ')
 
 ################ end Data import
 
 
 ############ modifications of imported tables
 
+# checking that everything is fine with tsv_extra_fields, and info recovering
+tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE_EXAMPLE','SEVERITY_EXAMPLE','IMPACT_EXAMPLE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB'] #warning : can be replaced below
+csq_subfield_name = []
+csq_subfield_pos = []
+tsv_extra_fields_wo_csq = []
+if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
+    tempo_log = [bool(re.search("^CSQ_.*$", i1)) for i1 in tsv_extra_fields] # is there any CSQ_ ?
+    if any(i1 for i1 in tempo_log) is True:
+        tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
+        tempo_pos = []
+        for i2 in list(range(0, len(tsv_extra_fields))):
+            if bool(re.search("^CSQ_.*$", tsv_extra_fields[i2])) is True:
+                tempo = re.sub(pattern = "^CSQ_", repl = "", string = tsv_extra_fields[i2])
+                csq_subfield_name.append(tempo)
+            else:
+                tempo_pos.append(i2)
 
-if all([i0 in vcf_info_field_titles for i0 in tsv_extra_fields]) is not True:
-    sys.exit("Error in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n")
+        if all([i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]) is not True:
+            sys.exit("Error in fisher_lod.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+" ".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+" ".join(vcf_csq_subfield_titles)+"\n")
+        else:
+            for i2 in list(range(0, len(vcf_csq_subfield_titles))):
+                for i3 in csq_subfield_name:
+                    if i3 == vcf_csq_subfield_titles[i2]:
+                        csq_subfield_pos.append(i2)
+
+        tsv_extra_fields_wo_csq = [tsv_extra_fields[i1] for i1 in tempo_pos]
+        if all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]) is not True:
+            sys.exit("Error in fisher_lod.py: not considering CSQ_, some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n")
+
+    elif all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields]) is not True:
+            sys.exit("Error in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n")
+
+    else:
+        tsv_extra_fields_wo_csq = tsv_extra_fields
 
 
+
+
+df = pd.DataFrame(columns = tsv_columns + csq_subfield_name + tsv_extra_fields_wo_csq)
 with warnings.catch_warnings():
     # https://docs.python.org/3/library/warnings.html#warning-categories
     warnings.filterwarnings("ignore", category=FutureWarning)
@@ -261,7 +326,7 @@ with warnings.catch_warnings():
 #                df = df.append(tempo)
     for v in vcf: # parse each line of vcf with the content of region in it
         if v.CHROM == region:
-            tempo = fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
+            tempo = fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos)
             df = df.append(tempo)
 
 # on ecrit la dataframe dans un fichier
