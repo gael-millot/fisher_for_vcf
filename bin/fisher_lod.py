@@ -93,7 +93,7 @@ vcf_csq_subfield_titles_path = sys.argv[6]
 ################################ Functions
 
 
-def fisher(v, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfield_pos):
+def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfield_pos):
     '''
     AIM
         compute fisher for a line of a vcf
@@ -112,7 +112,16 @@ def fisher(v, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfi
         for v in vcf:
             fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
     DEBUGGING
-        v = vcf
+        # use the container: sudo docker run -ti --entrypoint bash -v /mnt/c/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset:/tmp gmillot/python_v3.9.10_extended_v3.1:gitlab_v8.7)
+vcf = VCF("/tmp/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf")
+count = 1 
+for v in vcf:
+    if count == 1: break
+
+tsv_columns = ['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
+tsv_extra_fields_wo_csq = ['AC', 'AF']
+csq_subfield_name = ['PolyPhen']
+csq_subfield_pos = [26]
     '''
     
     # je fais 2 dictionnaire pour stocker mes compte d'atteint/non atteint porteurs/non porteurs
@@ -146,14 +155,8 @@ def fisher(v, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfi
         # ici c'est porteur (gt 1 ou 3) versus non porteur (gt 0) pour les atteints (aff) versus les non atteint (una)
         oddsratio, pvalue = stats.fisher_exact([[aff.get(1,0)+aff.get(3,0),aff.get(0,0)],[una.get(1,0)+una.get(3,0),una.get(0,0)]])
 
-
-        tempo_csq = v.INFO.get('CSQ').split(',')
-
-
-################ here, get the csq_subfield_name info and if more than 1 -> several lines, per each value, else 
-
-
-
+        # filling a one row data frame with or without adding
+        tempo_csq = v.INFO.get('CSQ').split(',') # number of fields in CSQ (comma sep), i.e., nb of rows
         if len(csq_subfield_name) == 0:
             gene = tempo_csq[0].split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
             impact = tempo_csq[0].split('|')[1]
@@ -165,22 +168,61 @@ def fisher(v, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfi
 
             df3 = df3.append(df2)
 
+        # get the csq_subfield_name info and if more than 1 -> several lines, per each value, else
         else:
+            subfield_pos = list(range(0, len(tempo_csq)))
+            gene = []
+            severity = []
+            impact = []
+            for i3 in csq_subfield_name: # number of subfields of CSQ wanted, i.e., number of columns
+                locals()[i3] = []
+            for i3 in tempo_csq: # tempo_csq
+                gene.append(i3.split('|')[3]) # See protocole 109: gene taken in position 4 if no SYMBOL field
+                severity.append(i3.split('|')[2])
+                impact.append(i3.split('|')[1])
 
-            count = 0
-            for i2 in tempo_csq:
-                count = count + 1 # CSQ subfield nb
-                gene = i2.split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
-                impact = i2.split('|')[1]
-                severity = i2.split('|')[2]
+                for i4 in list(range(0, len(csq_subfield_name))): # for each CSQ_ field wanted (polyphen, SIFT)
+                    locals()[csq_subfield_name[i4]].append(i3.split('|')[csq_subfield_pos[i4]])
+            # from here, we have three lists gene, severity and impact with n elements, and i csq_subfield_name lists with n elements
+            # we can consider the nb of elements as lines (because future lines in the data frame) and the lists as columns
+            # removal of "lines" with no values in all the csq_subfield_name
+            tempo_empty_log = [] # True if all are empty. Warning, works by lines
+            for i3 in list(range(0, len(tempo_csq))):
+                tempo_log = []
+                for i4 in csq_subfield_name:
+                    if locals()[i4][i3] == "":
+                        tempo_log.append(True)
+                    else:
+                        tempo_log.append(False)
+                if all([i4 == True for i4 in tempo_log]) is True:
+                    tempo_empty_log.append(True)
+                else:
+                    tempo_empty_log.append(False)
 
-                df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an, count]], columns = tsv_columns)
+            subfield_pos = [subfield_pos[i3] for i3 in list(reversed(range(0, len(subfield_pos)))) if tempo_empty_log[i3] is False]
+            gene = [gene[i3] for i3 in list(reversed(range(0, len(gene)))) if tempo_empty_log[i3] is False]
+            severity = [severity[i3] for i3 in list(reversed(range(0, len(severity)))) if tempo_empty_log[i3] is False]
+            impact = [impact[i3] for i3 in list(reversed(range(0, len(impact)))) if tempo_empty_log[i3] is False]
+            for i3 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
+                locals()[i3] = [locals()[i3][i4] for i4 in list(reversed(range(0, len(locals()[i3])))) if tempo_empty_log[i4] is False]
+            # end removal of "lines" with no values in all the csq_subfield_name
+
+            df2=pd.DataFrame(columns = tsv_columns)
+            for i3 in list(range(0, len(subfield_pos))):
+                df2 = df2.append([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], severity[i3], impact[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]], columns = tsv_columns, ignore_index = True)
+            
+            for i3 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT), column added to the data frame
+                df2[locals()[i4]] = locals()[i4]
 
             if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
                 for i4 in tsv_extra_fields_wo_csq:
-                    df2[i4] = v.INFO.get(i4)
+                    for i5 in list(range(0, len(subfield_pos))):
+                        if i5 == 0:
+                            df2[i4] = v.INFO.get(i4)
+                        else:
+                            df2[i5, i4] = v.INFO.get(i4)
 
-                df3 = df3.append(df2)
+            df3 = df3.append(df2)
 
     return df3
 
@@ -326,7 +368,7 @@ with warnings.catch_warnings():
 #                df = df.append(tempo)
     for v in vcf: # parse each line of vcf with the content of region in it
         if v.CHROM == region:
-            tempo = fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos)
+            tempo = fisher(v = v, status = status, tsv_columns = tsv_columns, tsv_extra_fields_wo_csq = tsv_extra_fields_wo_csq, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos)
             df = df.append(tempo)
 
 # on ecrit la dataframe dans un fichier
