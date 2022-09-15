@@ -199,28 +199,41 @@ csq_subfield_pos = [26]
                 else:
                     tempo_empty_log.append(False)
 
-            subfield_pos = [subfield_pos[i3] for i3 in list(reversed(range(0, len(subfield_pos)))) if tempo_empty_log[i3] is False]
-            gene = [gene[i3] for i3 in list(reversed(range(0, len(gene)))) if tempo_empty_log[i3] is False]
-            severity = [severity[i3] for i3 in list(reversed(range(0, len(severity)))) if tempo_empty_log[i3] is False]
-            impact = [impact[i3] for i3 in list(reversed(range(0, len(impact)))) if tempo_empty_log[i3] is False]
-            for i3 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
-                locals()[i3] = [locals()[i3][i4] for i4 in list(reversed(range(0, len(locals()[i3])))) if tempo_empty_log[i4] is False]
-            # end removal of "lines" with no values in all the csq_subfield_name
+            if any([i3 == False for i3 in tempo_empty_log]): # means at least one non empty
+                subfield_pos = [subfield_pos[i4] for i4 in list(reversed(range(0, len(subfield_pos)))) if tempo_empty_log[i4] == False]
+                gene = [gene[i4] for i4 in list(reversed(range(0, len(gene)))) if tempo_empty_log[i4] == False]
+                severity = [severity[i4] for i4 in list(reversed(range(0, len(severity)))) if tempo_empty_log[i4] == False]
+                impact = [impact[i4] for i4 in list(reversed(range(0, len(impact)))) if tempo_empty_log[i4] == False]
+                for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
+                    locals()[i4] = [locals()[i4][i5] for i5 in list(reversed(range(0, len(locals()[i4])))) if tempo_empty_log[i5] == False]
+                # end removal of "lines" with no values in all the csq_subfield_name
+            else: # means everything is empty, thus, I have to shrink these lists
+                subfield_pos = []
+                gene = gene[0]
+                severity = severity[0]
+                impact = severity[0]
+
+############ Problem about columns between df3 and df
+
+
 
             df2=pd.DataFrame(columns = tsv_columns)
-            for i3 in list(range(0, len(subfield_pos))):
-                df2 = df2.append([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], severity[i3], impact[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]], columns = tsv_columns, ignore_index = True)
-            
-            for i3 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT), column added to the data frame
-                df2[locals()[i4]] = locals()[i4]
+            if len(subfield_pos) == 0:
+                df2 = df2.append([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos]])
+            else:
+                for i4 in list(range(0, len(subfield_pos))):
+                    df2 = df2.append([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i5[0]+"="+str(i5[1]) for i5 in v.INFO]), gene[i4], severity[i4], impact[i4], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i4]]])
+                
+                for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT), column added to the data frame
+                    df2[locals()[i4]] = locals()[i4]
 
-            if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
-                for i4 in tsv_extra_fields_wo_csq:
-                    for i5 in list(range(0, len(subfield_pos))):
-                        if i5 == 0:
-                            df2[i4] = v.INFO.get(i4)
-                        else:
-                            df2[i5, i4] = v.INFO.get(i4)
+                if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
+                    for i5 in tsv_extra_fields_wo_csq:
+                        for i6 in list(range(0, len(subfield_pos))):
+                            if i6 == 0:
+                                df2[i5] = v.INFO.get(i5)
+                            else:
+                                df2[i6, i5] = v.INFO.get(i5)
 
             df3 = df3.append(df2)
 
