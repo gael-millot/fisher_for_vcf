@@ -45,6 +45,11 @@ Compute the Fisher exact test statistics (score) and p values from a vcf annotat
 
 **example_of_results** Folder containing examples of result obtained with the dataset
 
+| File | Description |
+| --- | --- |
+| **PL_family_WGS_fisher_1663355226** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf as sample_path |
+| **PL_family_WGS_fisher_1663355634** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz as sample_path |
+
 
 <br /><br />
 ## HOW TO RUN
@@ -178,6 +183,8 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 
 **fisher.tsv** 
 
+Warning : if the tsv_extra_fields parameter is "NULL", then a single line per variant. Otherwise, Each variant can be represented by several identical lines if the selected field has several values (CSQ can have several subfields, one for each transcript)
+
 | Column | Description |
 | --- | --- |
 | **CHROM** | Chromosome name |
@@ -194,6 +201,8 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 | **P_VALUE** | p-value of the exact fisher test |
 | **NEG_LOG10_P_VALUE** | -log10 of the p-value |
 | **PATIENT_NB** | Number of cases |
+|  | Additional fields according to the tsv_extra_fields parameter of the config file |
+
 
 **res.vcf** reconstituted vcf file from the tsv file, with FISHER field at the end of the INFO field. See the header of the vcf file for FISHER field description
 
@@ -237,6 +246,11 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v1.5
+
+1) fields of the VCF (like AC or subfield of CSQ like SIFT) can be added into the tsv file
+
 
 ### v1.4
 

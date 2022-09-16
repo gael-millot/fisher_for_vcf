@@ -400,7 +400,7 @@ if(length(obs) > 0 & nrow(obs) > 0){
     }
     # preparation of the x coordinates: three solutions: 1) "none", 2) single chromo "chr7" or "chr7:0-15", 3) several chromo chr7, chr8" or "chr7:0-15, chr8" or "chr7:0-15, chr8:0-20"
     # The idea is to select rows of chr and potentially restrict some chr limits
-    if(x.lim == "region" & ! region == "none"){ # if region == "none", then no need to work on x.lim
+    if(x.lim == "region" & region != "none"){ # if region == "none", then no need to work on x.lim
         tempo <- strsplit(x = region, split = ",")[[1]]
         tempo <- gsub(x = tempo, pattern = " ", replacement = "")
         if( ! all(grepl(x = tempo, pattern = "^chr.+"))){

@@ -66,6 +66,7 @@ region = sys.argv[3]
 vcf_info_field_titles_path = sys.argv[4]
 tsv_extra_fields = sys.argv[5]
 vcf_csq_subfield_titles_path = sys.argv[6]
+fisher_report = sys.argv[7]
 
 
 ################################ End Config import
@@ -117,7 +118,7 @@ vcf = VCF("/tmp/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf")
 count = 1 
 for v in vcf:
     if count == 1: break
-
+status = {'C0011JY': 1, 'C0011JZ': 2, 'C0011K1': 1, 'C0011K2': 2, 'C0011K3': 2, 'C0011K5': 1, 'C0011KA': 2, 'C0011KB': 1, 'IP00FNP': 2, 'IP00FNW': 2, 'IP00FNY': 2}
 tsv_columns = ['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
 tsv_extra_fields_wo_csq = ['AC', 'AF']
 csq_subfield_name = ['PolyPhen']
@@ -161,7 +162,7 @@ csq_subfield_pos = [26]
             gene = tempo_csq[0].split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
             impact = tempo_csq[0].split('|')[1]
             severity = tempo_csq[0].split('|')[2]
-            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = tsv_columns)
+            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = tsv_columns)
             if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
                 for i4 in tsv_extra_fields_wo_csq:
                     df2[i4] = v.INFO.get(i4)
@@ -182,7 +183,10 @@ csq_subfield_pos = [26]
                 impact.append(i3.split('|')[1])
 
                 for i4 in list(range(0, len(csq_subfield_name))): # for each CSQ_ field wanted (polyphen, SIFT)
+                    # f = open(fisher_report, "a") ; f.write(str(csq_subfield_name) + '\n' + str(i4) + '\n\n\n\n' + str(csq_subfield_name[i4]) + '\n\n\n\n' +  str(csq_subfield_pos) + '\n')
                     locals()[csq_subfield_name[i4]].append(i3.split('|')[csq_subfield_pos[i4]])
+
+            # f = open("test.txt", "a") ; f.write(str(locals()) + '\n\n\n\n' + str(locals()[csq_subfield_name[i4]]) + '\n')
             # from here, we have three lists gene, severity and impact with n elements, and i csq_subfield_name lists with n elements
             # we can consider the nb of elements as lines (because future lines in the data frame) and the lists as columns
             # removal of "lines" with no values in all the csq_subfield_name
@@ -200,40 +204,49 @@ csq_subfield_pos = [26]
                     tempo_empty_log.append(False)
 
             if any([i3 == False for i3 in tempo_empty_log]): # means at least one non empty
-                subfield_pos = [subfield_pos[i4] for i4 in list(reversed(range(0, len(subfield_pos)))) if tempo_empty_log[i4] == False]
-                gene = [gene[i4] for i4 in list(reversed(range(0, len(gene)))) if tempo_empty_log[i4] == False]
-                severity = [severity[i4] for i4 in list(reversed(range(0, len(severity)))) if tempo_empty_log[i4] == False]
-                impact = [impact[i4] for i4 in list(reversed(range(0, len(impact)))) if tempo_empty_log[i4] == False]
+                subfield_pos = [subfield_pos[i4] for i4 in list(range(0, len(subfield_pos))) if tempo_empty_log[i4] == False]
+                gene = [gene[i4] for i4 in list(range(0, len(gene))) if tempo_empty_log[i4] == False]
+                severity = [severity[i4] for i4 in list(range(0, len(severity))) if tempo_empty_log[i4] == False]
+                impact = [impact[i4] for i4 in list(range(0, len(impact))) if tempo_empty_log[i4] == False]
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
-                    locals()[i4] = [locals()[i4][i5] for i5 in list(reversed(range(0, len(locals()[i4])))) if tempo_empty_log[i5] == False]
+                    # f = open("test.txt", "a") ; f.write(str(locals()[i4]))
+                    tempo = []
+                    for i5 in list(range(0, len(locals()[i4]))):
+                        if tempo_empty_log[i5] == False:
+                            tempo.append(locals()[i4][i5])
+
+                    # f = open("test.txt", "a") ; f.write(str(tempo))
+                    locals()[i4] = tempo # [locals()[i4][i5] for i5 in list(reversed(range(0, len(locals()[i4])))) if tempo_empty_log[i5] == False]
                 # end removal of "lines" with no values in all the csq_subfield_name
             else: # means everything is empty, thus, I have to shrink these lists
-                subfield_pos = []
-                gene = gene[0]
-                severity = severity[0]
-                impact = severity[0]
+                subfield_pos = ['NA']
+                gene = [gene[0]]
+                severity = [severity[0]]
+                impact = [impact[0]]
+                for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
+                    locals()[i4] = ['NA']
 
 ############ Problem about columns between df3 and df
 
+            # f = open("test.txt", "a") ; f.write(str(list(range(0, len(subfield_pos)))))
+            for i3 in list(range(0, len(subfield_pos))):
+                # f = open("test.txt", "a") ; f.write(str([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], severity[i3], impact[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n' + str(severity) + '\n\n\n\n')
+                tempo = pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], severity[i3], impact[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]], columns = tsv_columns)
 
-
-            df2=pd.DataFrame(columns = tsv_columns)
-            if len(subfield_pos) == 0:
-                df2 = df2.append([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos]])
-            else:
-                for i4 in list(range(0, len(subfield_pos))):
-                    df2 = df2.append([[v.CHROM, v.POS, v.REF, v.ALT, ';'.join([i5[0]+"="+str(i5[1]) for i5 in v.INFO]), gene[i4], severity[i4], impact[i4], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i4]]])
-                
+                # f = open("test.txt", "a") ; f.write(str(csq_subfield_name) + '\n')
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT), column added to the data frame
-                    df2[locals()[i4]] = locals()[i4]
+                    # f = open("test.txt", "a") ; f.write(str(csq_subfield_name) + '\n\n\n\n' + str(csq_subfield_pos) + '\n\n\n\n' + str(locals()[i4][i3]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n')
+                    tempo[i4] = locals()[i4][i3]
 
                 if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
-                    for i5 in tsv_extra_fields_wo_csq:
-                        for i6 in list(range(0, len(subfield_pos))):
-                            if i6 == 0:
-                                df2[i5] = v.INFO.get(i5)
-                            else:
-                                df2[i6, i5] = v.INFO.get(i5)
+                    for i6 in tsv_extra_fields_wo_csq:
+                        tempo[i6] = v.INFO.get(i6)
+
+                if i3 == 0:
+                    df2 = tempo
+
+                else:
+                    df2 = df2.append(tempo)
 
             df3 = df3.append(df2)
 
@@ -305,9 +318,9 @@ with open(ped, 'r') as pin:
         status[row[1]]=int(row[5])
 # le dictionnaire ressemble a ca :
 # {'IP00FN5': 2, 'IP00FLK': 2, 'IP00FLT': 1, 'IP00FM2': 2, 'IP00FMC': 1}
-
+# f = open("status.txt", "a") ; f.write(str(status))
 # le fichier vcf contenant les data des individus que l'on etudie
-# attention doit etre bgzippé (.gz) et avoir un index tabix (.tbi)
+# si bgzippé (.gz), doit avoir un index tabix (.tbi)
 vcf = VCF(vcf_path) # import the VCF as it is. But this tool as the advantage to extract easily, using INFO, etc., see https://brentp.github.io/cyvcf2/docstrings.html
 # below is to visualize the vcf if required
 # for v in vcf:
@@ -348,10 +361,10 @@ if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
         if all([i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]) is not True:
             sys.exit("Error in fisher_lod.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+" ".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+" ".join(vcf_csq_subfield_titles)+"\n")
         else:
-            for i2 in list(range(0, len(vcf_csq_subfield_titles))):
-                for i3 in csq_subfield_name:
-                    if i3 == vcf_csq_subfield_titles[i2]:
-                        csq_subfield_pos.append(i2)
+            for i2 in csq_subfield_name:
+                for i3 in list(range(0, len(vcf_csq_subfield_titles))):
+                    if i2 == vcf_csq_subfield_titles[i3]:
+                        csq_subfield_pos.append(i3)
 
         tsv_extra_fields_wo_csq = [tsv_extra_fields[i1] for i1 in tempo_pos]
         if all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]) is not True:
@@ -379,13 +392,23 @@ with warnings.catch_warnings():
 #            for v in vcf(i1):
 #                tempo = fisher(v = v, columns = columns)
 #                df = df.append(tempo)
+    LOG_EVERY_N = 1000
+    count = 0
+    report = open(fisher_report, "a")
     for v in vcf: # parse each line of vcf with the content of region in it
+        count = count + 1
         if v.CHROM == region:
             tempo = fisher(v = v, status = status, tsv_columns = tsv_columns, tsv_extra_fields_wo_csq = tsv_extra_fields_wo_csq, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos)
             df = df.append(tempo)
 
+        if (count % LOG_EVERY_N) == 0:
+            report.write("NUMBER OF VCF LINES SCANNED: " + str(count) + "\n")
+
+    report.close()
+
 # on ecrit la dataframe dans un fichier
 df.to_csv('./fisher.tsv', sep='\t', index=False)
+
 
 
 ############ end modifications of imported tables

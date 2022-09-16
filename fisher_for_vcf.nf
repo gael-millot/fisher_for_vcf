@@ -161,7 +161,7 @@ process vcf_subfield_title {
 
 process fisher {
     label 'python' // see the withLabel: bash in the nextflow config file 
-    //publishDir path: "${out_path}", mode: 'copy', overwrite: false
+    publishDir "${out_path}/reports", mode: 'copy', pattern: "{fisher_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
@@ -174,11 +174,12 @@ process fisher {
 
     output:
     file "*.tsv" into fisher_ch1 // multi channel
+    file "*.txt"
 
     script:
     """
     #!/bin/bash -ue
-    fisher_lod.py ${vcf} ${ped} "${region2}" ${vcf_info_field_titles} "${tsv_extra_fields}" "${vcf_csq_subfield_titles}"
+    fisher_lod.py ${vcf} ${ped} "${region2}" ${vcf_info_field_titles} "${tsv_extra_fields}" "${vcf_csq_subfield_titles}" "fisher_report.txt"
     """
 }
 
