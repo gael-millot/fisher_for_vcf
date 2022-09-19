@@ -25,7 +25,9 @@
 ## AIM
 
 
-Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a res.tsv file and a Miami plot.
+Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
+<br /><br />
+Return a res.tsv file and a Miami plot.
 <br /><br />
 The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
 <br /><br />
@@ -218,7 +220,7 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 | **PATIENT_NB** | Number of AFF and UNAFF used for the fisher data |
 | Optional colums | |
 | **CSQ_TRANSCRIPT_NB** | number of fieds in the CSQ field (comma separated). Present only if "CSQ" is present in the tsv_extra_fields parameter |
-| *** <NAME> *** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
+| ** * <NAME> * ** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
 
 <br /><br />
 **res.vcf**: file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
