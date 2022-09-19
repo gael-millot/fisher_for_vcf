@@ -186,18 +186,19 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 
 
 **reports**: folder containing all the reports of the different processes including the *fisher_for_vcf.config* file used.
-<br />
+<br /><br />
 **Miami.png** miami plot in the .png format.
-<br />
+<br /><br />
 **res.tsv** table
-<br />
+<br /><br />
 rows:
-<br />
+<br /><br />
 1) each row representing a different variant if the tsv_extra_fields parameter of the fisher_for_vcf.config file does not contain the CSQ field (VEP).
 2) several lines per variant otherwise, depending on the number of subfields (comma separated) in the CSQ field (VEP) of the INFO field of the VCF file.
-<br />
+<br /><br />
 columns:
 <br />
+
 | File | Description |
 | --- | --- |
 | **CHROM** | chromosome |
@@ -217,11 +218,12 @@ columns:
 | Optional colums | |
 | **CSQ_TRANSCRIPT_NB** | number of fieds in the CSQ field (comma separated). Present only if "CSQ" is present in the tsv_extra_fields parameter |
 | ***<NAME>*** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
-<br />
+
+<br /><br />
 **res.vcf**: file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
-<br />
+<br /><br />
 **vcf_csq_subfield_titles.txt**: control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed.
-<br />
+<br /><br />
 **vcf_info_field_titles.txt**: control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed.
 
 
