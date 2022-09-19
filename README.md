@@ -25,18 +25,21 @@
 ## AIM
 
 
-Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a res.tsv file and a Miami plot.<br />The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
-Return also a res.vcf file made from the red.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present
+Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a res.tsv file and a Miami plot.
+<br />
+The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
+<br />
+Return also a res.vcf file made from the red.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
 
 <br /><br />
 ## CONTENT
 
 
-**fisher_for_vcf.nf** File that can be executed using a CLI (command line interface)
+**fisher_for_vcf.nf**: File that can be executed using a CLI (command line interface).
 
-**fisher_for_vcf.config** Parameter settings for the fisher_for_vcf.nf file
+**fisher_for_vcf.config**: Parameter settings for the fisher_for_vcf.nf file.
 
-**dataset** Folder containing some datasets than can be used as examples
+**dataset**: Folder containing some datasets than can be used as examples.
 
 | File | Description |
 | --- | --- |
@@ -44,10 +47,10 @@ Return also a res.vcf file made from the red.tsv file, mimicing a VCF file, i.e.
 | **Dyslexia.pedigree.txt** | Pedigree associated to Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz |
 | **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot |
 
-**example_of_results** Folder containing examples of result obtained with the dataset
-
+**example_of_results** Folder containing examples of result obtained with the dataset.
+<br />
 Two folders are present:
-
+<br />
 | File | Description |
 | --- | --- |
 | **PL_family_WGS_fisher_1663355226** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf as sample_path |
@@ -182,16 +185,19 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 ## OUTPUT
 
 
-**reports** folder containing all the reports of the different processes including the **fisher_for_vcf.config** file used.
-
+**reports**: folder containing all the reports of the different processes including the *fisher_for_vcf.config* file used.
+<br />
 **Miami.png** miami plot in the .png format.
-
+<br />
 **res.tsv** table
+<br />
 rows:
+<br />
 1) each row representing a different variant if the tsv_extra_fields parameter of the fisher_for_vcf.config file does not contain the CSQ field (VEP).
 2) several lines per variant otherwise, depending on the number of subfields (comma separated) in the CSQ field (VEP) of the INFO field of the VCF file.
+<br />
 columns:
-
+<br />
 | File | Description |
 | --- | --- |
 | **CHROM** | chromosome |
@@ -211,12 +217,12 @@ columns:
 | Optional colums | |
 | **CSQ_TRANSCRIPT_NB** | number of fieds in the CSQ field (comma separated). Present only if "CSQ" is present in the tsv_extra_fields parameter |
 | ***<NAME>*** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
-
-**res.vcf** file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
-
-**vcf_csq_subfield_titles.txt** control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed.
-
-**vcf_info_field_titles.txt** control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed.
+<br />
+**res.vcf**: file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
+<br />
+**vcf_csq_subfield_titles.txt**: control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed.
+<br />
+**vcf_info_field_titles.txt**: control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed.
 
 
 <br /><br />
