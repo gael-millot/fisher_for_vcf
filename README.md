@@ -25,7 +25,8 @@
 ## AIM
 
 
-Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a tsv file and a Miami plot.<br />The tsv file includes all fields and sub-fields of the vcf file in different columns. For instance 
+Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.<br />Return a res.tsv file and a Miami plot.<br />The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
+Return also a res.vcf file made from the red.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present
 
 <br /><br />
 ## CONTENT
@@ -45,10 +46,14 @@ Compute the Fisher exact test statistics (score) and p values from a vcf annotat
 
 **example_of_results** Folder containing examples of result obtained with the dataset
 
+Two folders are present:
+
 | File | Description |
 | --- | --- |
 | **PL_family_WGS_fisher_1663355226** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf as sample_path |
 | **PL_family_WGS_fisher_1663355634** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz as sample_path |
+
+See the OUTPUT section for the description of the folder and files.
 
 
 <br /><br />
@@ -177,34 +182,41 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 ## OUTPUT
 
 
-**reports** folder containing all the reports of the different processes including the **fisher_for_vcf.config** file used
+**reports** folder containing all the reports of the different processes including the **fisher_for_vcf.config** file used.
 
-**Miami.png** miami plot in the .png format
+**Miami.png** miami plot in the .png format.
 
-**fisher.tsv** 
+**res.tsv** table
+rows:
+1) each row representing a different variant if the tsv_extra_fields parameter of the fisher_for_vcf.config file does not contain the CSQ field (VEP).
+2) several lines per variant otherwise, depending on the number of subfields (comma separated) in the CSQ field (VEP) of the INFO field of the VCF file.
+columns:
 
-Warning : if the tsv_extra_fields parameter is "NULL", then a single line per variant. Otherwise, Each variant can be represented by several identical lines if the selected field has several values (CSQ can have several subfields, one for each transcript)
-
-| Column | Description |
+| File | Description |
 | --- | --- |
-| **CHROM** | Chromosome name |
-| **POS** | Position on the chromosome (in bp) |
-| **REF** | Reference allele sequence |
-| **ALT** | Alternative allele (ALT) sequence |
-| **INFO** | INFO field of the vcf |
-| **GENE** | Gene name |
-| **SEVERITY** | Severity of the alternative allele from VEP (*consequence* field) |
-| **IMPACT** | Impact of the alternative allele from VEP (*IMPACT* field) |
+| **CHROM** | chromosome |
+| **POS** | position in the chromosome (hg19)| 
+| **REF** | nucleotide on the reference sequence (hg19) |
+| **ALT** | alternative sequence |
+| **INFO** | INFO field of the initial VCF file |
+| **GENE** | name of the gene where the POS is (SYMBOL field of the CSQ field (VEP) of INFO field of the VCF) |
+| **CONSEQUENCE** | ALT consequence (consequence field of the CSQ field (VEP) of INFO field of the VCF) |
+| **IMPACT** | severity of the ALT consequence (IMPACT field of the CSQ field (VEP) of INFO field of the VCF) |
 | **AFF** | Count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases. Example: {0:4, 1:2} for 4 cases HOM_REF and 2 cases HET |
 | **UNAFF** | as in *aff* in the unaffected cases |
 | **OR** | Odds ratio (n11/n12)/(n21/n22) = (n11\*n22)/(n12\*n21) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /></li><li>n12 = nHOM_REF_aff<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /></li><li>n22 = nHOM_REF_unaff<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff |
 | **P_VALUE** | p-value of the exact fisher test |
 | **NEG_LOG10_P_VALUE** | -log10 of the p-value |
-| **PATIENT_NB** | Number of cases |
-|  | Additional fields according to the tsv_extra_fields parameter of the config file |
+| **PATIENT_NB** | Number of AFF and UNAFF used for the fisher data |
+| Optional colums | |
+| **CSQ_TRANSCRIPT_NB** | number of fieds in the CSQ field (comma separated). Present only if "CSQ" is present in the tsv_extra_fields parameter |
+| ***<NAME>*** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
 
+**res.vcf** file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
 
-**res.vcf** reconstituted vcf file from the tsv file, with FISHER field at the end of the INFO field. See the header of the vcf file for FISHER field description
+**vcf_csq_subfield_titles.txt** control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed.
+
+**vcf_info_field_titles.txt** control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed.
 
 
 <br /><br />

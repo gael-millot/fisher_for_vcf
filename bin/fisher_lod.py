@@ -119,7 +119,7 @@ count = 1
 for v in vcf:
     if count == 1: break
 status = {'C0011JY': 1, 'C0011JZ': 2, 'C0011K1': 1, 'C0011K2': 2, 'C0011K3': 2, 'C0011K5': 1, 'C0011KA': 2, 'C0011KB': 1, 'IP00FNP': 2, 'IP00FNW': 2, 'IP00FNY': 2}
-tsv_columns = ['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
+tsv_columns = ['CHROM','POS','REF','ALT', 'INFO', 'GENE','IMPACT','CONSEQUENCE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
 tsv_extra_fields_wo_csq = ['AC', 'AF']
 csq_subfield_name = ['PolyPhen']
 csq_subfield_pos = [26]
@@ -160,9 +160,9 @@ csq_subfield_pos = [26]
         tempo_csq = v.INFO.get('CSQ').split(',') # number of fields in CSQ (comma sep), i.e., nb of rows
         if len(csq_subfield_name) == 0:
             gene = tempo_csq[0].split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
-            impact = tempo_csq[0].split('|')[1]
-            severity = tempo_csq[0].split('|')[2]
-            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, severity, impact, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = tsv_columns)
+            consequence = tempo_csq[0].split('|')[1]
+            impact = tempo_csq[0].split('|')[2]
+            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, impact, consequence, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = tsv_columns)
             if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
                 for i4 in tsv_extra_fields_wo_csq:
                     df2[i4] = v.INFO.get(i4)
@@ -173,21 +173,21 @@ csq_subfield_pos = [26]
         else:
             subfield_pos = list(range(0, len(tempo_csq)))
             gene = []
-            severity = []
             impact = []
+            consequence = []
             for i3 in csq_subfield_name: # number of subfields of CSQ wanted, i.e., number of columns
                 locals()[i3] = []
             for i3 in tempo_csq: # tempo_csq
                 gene.append(i3.split('|')[3]) # See protocole 109: gene taken in position 4 if no SYMBOL field
-                severity.append(i3.split('|')[2])
-                impact.append(i3.split('|')[1])
+                impact.append(i3.split('|')[2])
+                consequence.append(i3.split('|')[1])
 
                 for i4 in list(range(0, len(csq_subfield_name))): # for each CSQ_ field wanted (polyphen, SIFT)
                     # f = open(fisher_report, "a") ; f.write(str(csq_subfield_name) + '\n' + str(i4) + '\n\n\n\n' + str(csq_subfield_name[i4]) + '\n\n\n\n' +  str(csq_subfield_pos) + '\n')
                     locals()[csq_subfield_name[i4]].append(i3.split('|')[csq_subfield_pos[i4]])
 
             # f = open("test.txt", "a") ; f.write(str(locals()) + '\n\n\n\n' + str(locals()[csq_subfield_name[i4]]) + '\n')
-            # from here, we have three lists gene, severity and impact with n elements, and i csq_subfield_name lists with n elements
+            # from here, we have three lists gene, impact and consequence with n elements, and i csq_subfield_name lists with n elements
             # we can consider the nb of elements as lines (because future lines in the data frame) and the lists as columns
             # removal of "lines" with no values in all the csq_subfield_name
             tempo_empty_log = [] # True if all are empty. Warning, works by lines
@@ -206,8 +206,8 @@ csq_subfield_pos = [26]
             if any([i3 == False for i3 in tempo_empty_log]): # means at least one non empty
                 subfield_pos = [subfield_pos[i4] for i4 in list(range(0, len(subfield_pos))) if tempo_empty_log[i4] == False]
                 gene = [gene[i4] for i4 in list(range(0, len(gene))) if tempo_empty_log[i4] == False]
-                severity = [severity[i4] for i4 in list(range(0, len(severity))) if tempo_empty_log[i4] == False]
                 impact = [impact[i4] for i4 in list(range(0, len(impact))) if tempo_empty_log[i4] == False]
+                consequence = [consequence[i4] for i4 in list(range(0, len(consequence))) if tempo_empty_log[i4] == False]
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
                     # f = open("test.txt", "a") ; f.write(str(locals()[i4]))
                     tempo = []
@@ -221,8 +221,8 @@ csq_subfield_pos = [26]
             else: # means everything is empty, thus, I have to shrink these lists
                 subfield_pos = ['NA']
                 gene = [gene[0]]
-                severity = [severity[0]]
                 impact = [impact[0]]
+                consequence = [consequence[0]]
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
                     locals()[i4] = ['NA']
 
@@ -230,8 +230,8 @@ csq_subfield_pos = [26]
 
             # f = open("test.txt", "a") ; f.write(str(list(range(0, len(subfield_pos)))))
             for i3 in list(range(0, len(subfield_pos))):
-                # f = open("test.txt", "a") ; f.write(str([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], severity[i3], impact[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n' + str(severity) + '\n\n\n\n')
-                tempo = pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], severity[i3], impact[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]], columns = tsv_columns)
+                # f = open("test.txt", "a") ; f.write(str([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n' + str(impact) + '\n\n\n\n')
+                tempo = pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]], columns = tsv_columns)
 
                 # f = open("test.txt", "a") ; f.write(str(csq_subfield_name) + '\n')
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT), column added to the data frame
@@ -342,14 +342,14 @@ with open(vcf_csq_subfield_titles_path, 'r') as f:
 ############ modifications of imported tables
 
 # checking that everything is fine with tsv_extra_fields, and info recovering
-tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE_EXAMPLE','SEVERITY_EXAMPLE','IMPACT_EXAMPLE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB'] #warning : can be replaced below
+tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE_EXAMPLE','IMPACT_EXAMPLE','CONSEQUENCE_EXAMPLE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB'] #warning : can be replaced below
 csq_subfield_name = []
 csq_subfield_pos = []
 tsv_extra_fields_wo_csq = []
 if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
     tempo_log = [bool(re.search("^CSQ_.*$", i1)) for i1 in tsv_extra_fields] # is there any CSQ_ ?
     if any(i1 for i1 in tempo_log) is True:
-        tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','SEVERITY','IMPACT','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
+        tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','IMPACT','CONSEQUENCE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
         tempo_pos = []
         for i2 in list(range(0, len(tsv_extra_fields))):
             if bool(re.search("^CSQ_.*$", tsv_extra_fields[i2])) is True:
