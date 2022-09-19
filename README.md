@@ -192,13 +192,13 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 **Miami.png**: miami plot in the .png format.
 <br /><br />
 **res.tsv**: table
-<br /><br />
+<br />
 &nbsp;&nbsp;&nbsp;&nbsp;Rows:
-<br /><br />
+<br />
 <ul><li>Each row representing a different variant if the tsv_extra_fields parameter of the fisher_for_vcf.config file does not contain the CSQ field (VEP).
 <br />
 </li><li>everal lines per variant otherwise, depending on the number of subfields (comma separated) in the CSQ field (VEP) of the INFO field of the VCF file.
-</li><br /><br />
+</li><br />
 &nbsp;&nbsp;&nbsp;&nbsp;Columns:
 <br />
 
