@@ -49,14 +49,14 @@ Return also a res.vcf file made from the red.tsv file, mimicing a VCF file, i.e.
 
 **example_of_results** Folder containing examples of result obtained with the dataset.
 <br /><br />
-	Two folders are present:
+> Two folders are present:
 <br />
 | File | Description |
 | --- | --- |
 | **PL_family_WGS_fisher_1663355226** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf as sample_path |
 | **PL_family_WGS_fisher_1663355634** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz as sample_path |
 
-	See the OUTPUT section for the description of the folder and files.
+> See the OUTPUT section for the description of the folder and files.
 
 
 <br /><br />
