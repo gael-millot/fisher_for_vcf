@@ -187,16 +187,17 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 
 **reports**: folder containing all the reports of the different processes including the *fisher_for_vcf.config* file used.
 <br /><br />
-**Miami.png** miami plot in the .png format.
+**Miami.png**: miami plot in the .png format.
 <br /><br />
-**res.tsv** table
+**res.tsv**: table
 <br /><br />
-rows:
+&nbsp;&nbsp;&nbsp;&nbsp;Rows:
 <br /><br />
-1) each row representing a different variant if the tsv_extra_fields parameter of the fisher_for_vcf.config file does not contain the CSQ field (VEP).
-2) several lines per variant otherwise, depending on the number of subfields (comma separated) in the CSQ field (VEP) of the INFO field of the VCF file.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Each row representing a different variant if the tsv_extra_fields parameter of the fisher_for_vcf.config file does not contain the CSQ field (VEP).
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Several lines per variant otherwise, depending on the number of subfields (comma separated) in the CSQ field (VEP) of the INFO field of the VCF file.
 <br /><br />
-columns:
+&nbsp;&nbsp;&nbsp;&nbsp;Columns:
 <br />
 
 | File | Description |
