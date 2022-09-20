@@ -10,8 +10,12 @@
 ##     Neuroscience Department                                         ##
 ##     Institut Pasteur Paris                                          ##
 ##                                                                     ##
+##     Gael A. Millot                                                  ##
+##     Bioinformatics and Biostatistics Hub                            ##
+##     Computational Biology Department                                ##
+##     Institut Pasteur Paris                                          ##
+##                                                                     ##
 #########################################################################
-
 
 
 

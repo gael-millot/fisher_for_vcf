@@ -53,12 +53,10 @@ Channel.fromPath("${sample_path}", checkIfExists: false).into{vcf_ch1 ; vcf_ch2 
 tbi_ch = Channel.fromPath("${sample_path}.tbi", checkIfExists: false) // Even if does not exist, it works. I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 ped_ch = Channel.fromPath("${ped_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 chr_ch = Channel.fromPath("${chr_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-// below is for parallelization of the fisher process
-if(region == 'none'){
-    region_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
-    region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM") // .split(",") split according to comma and create a tuple
+
+if(region == 'none'){  // for combine below for parallelization of the fisher process
+    region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM")
 }else{
-    region_val = region // value for the miami plot
     if(region =~ /,/){
         tempo = region.replaceAll(':.+,', ',')
     }else{
@@ -68,6 +66,14 @@ if(region == 'none'){
     tempo3 = tempo2.replaceAll(' ', '')
     tempo4 = tempo3.split(",") // .split(",") split according to comma and create an array https://www.tutorialspoint.com/groovy/groovy_split.htm
     region_ch = Channel.from(tempo4) 
+}
+
+if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miami plot
+    x_lim_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
+}else if(x_lim == 'region'){
+    x_lim_val = region
+}else{
+    x_lim_val = x_lim // value for the miami plot
 }
 
 //// end used once
@@ -196,8 +202,7 @@ process miami_plot {
     input:
     file fisher from fisher_ch3
     file chr from chr_ch
-    val region_val
-    val x_lim
+    val x_lim_val
     val bottom_y_column
     val color_column
     val y_lim1
@@ -211,7 +216,7 @@ process miami_plot {
     script:
     """
     #!/bin/bash -ue
-    miami.R ${fisher} ${chr} "${region_val}" "${x_lim}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
+    miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
     """
 }
 

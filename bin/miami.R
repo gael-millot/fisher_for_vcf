@@ -56,6 +56,9 @@ script <- "miami"
 ################################ Parameters that need to be set by the user
 
 
+whole <- "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" # true values of x_lim if x_lim = "whole", as imported through nextflow
+
+
 ################################ End Parameters that need to be set by the user
 
 
@@ -74,7 +77,6 @@ if(interactive() == FALSE){ # if(grepl(x = commandArgs(trailingOnly = FALSE), pa
     tempo.arg.names <- c(
         "fisher", 
         "chr.path", 
-        "region", 
         "x.lim", 
         "bottom.y.column",
         "color.column",
@@ -106,14 +108,14 @@ rm(tempo.cat)
 
 # fisher <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/fisher.tsv"
 # chr.path <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
-# region <- "chr1:0-50000, chr3:0-150000"
-# x.lim <- "region"
-# bottom.y.column <- 
-# color.column <- 
+# x.lim <- "chr1:0-50000, chr3:0-150000" # "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
+# bottom.y.column <- "NULL"
+# color.column <- "NULL"
 # y.lim1 <- 5
 # y.lim2 <- 3
 # cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
-# log <- "report.txt"
+# log <- "miami_report.txt"
+
 
 
 
@@ -128,9 +130,9 @@ param.list <- c(
     "script", 
     "run.way",
     if(run.way == "SCRIPT"){"command"}, 
+    "whole", 
     "fisher", 
     "chr.path", 
-    "region", 
     "x.lim", 
     "bottom.y.column",
     "color.column",
@@ -244,8 +246,7 @@ ee <- expression(arg.check <- c(arg.check, tempo$problem) , text.check <- c(text
 tempo <- fun_check(data = fisher, class = "vector", typeof = "character", length = 1) ; eval(ee)
 tempo <- fun_check(data = chr.path, class = "vector", typeof = "character", length = 1) ; eval(ee)
 # tempo <- fun_check(data = cute, class = "vector", typeof = "character", length = 1) ; eval(ee) # check above
-tempo <- fun_check(data = region, class = "vector", typeof = "character", length = 1) ; eval(ee)
-tempo <- fun_check(data = x.lim, options = c("whole", "region"), length = 1) ; eval(ee)
+tempo <- fun_check(data = x.lim, class = "vector", typeof = "character", length = 1) ; eval(ee)
 if(all(bottom.y.column != "NULL")){
     tempo <- fun_check(data = bottom.y.column, class = "vector", typeof = "character", length = 1) ; eval(ee)
 }else{
@@ -358,6 +359,11 @@ if( ! file.exists(fisher)){
     stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE cute PARAMETER DOES NOT EXISTS: ", fisher, "\n\n============\n\n"), call. = FALSE)
 }else{
     obs <- read.table(fisher, sep = "\t", stringsAsFactors = FALSE, header = TRUE, comment.char = "")
+    if(length(obs) > 0 & nrow(obs) > 0){
+        empty.obs <- FALSE
+    }else{
+        empty.obs <- TRUE
+    }
 }
 if( ! file.exists(chr.path)){
     stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE cute PARAMETER DOES NOT EXISTS: ", chr.path, "\n\n============\n\n"), call. = FALSE)
@@ -398,71 +404,63 @@ if(length(obs) > 0 & nrow(obs) > 0){
     for(i1 in chr$CHR_NB){
         obs$coord[obs$CHROM == i1] <- obs$POS[obs$CHROM == i1] + chr$LENGTH_CUMUL_TO_ADD[i1]
     }
-    # preparation of the x coordinates: three solutions: 1) "none", 2) single chromo "chr7" or "chr7:0-15", 3) several chromo chr7, chr8" or "chr7:0-15, chr8" or "chr7:0-15, chr8:0-20"
+    # preparation of the x coordinates: three solutions: 1) whole object (see above), 2) single chromo "chr7" or "chr7:0-15", 3) several chromo chr7, chr8" or "chr7:0-15, chr8" or "chr7:0-15, chr8:0-20"
     # The idea is to select rows of chr and potentially restrict some chr limits
-    if(x.lim == "region" & region != "none"){ # if region == "none", then no need to work on x.lim
-        tempo <- strsplit(x = region, split = ",")[[1]]
-        tempo <- gsub(x = tempo, pattern = " ", replacement = "")
-        if( ! all(grepl(x = tempo, pattern = "^chr.+"))){
-            tempo.cat <- paste0("ERROR IN miami.R:\nTHE region PARAMETER MUST START WITH \"chr\" IF NOT \"none\":\n", paste0(region, collapse = " "))
-            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-        }
-        if(any(grepl(x = tempo, pattern = ":"))){
-            # means that there are coordinates
-            if( ! all(grepl(tempo, pattern = "-"))){# normally no NA with is.null()
-                tempo.cat <- paste0("ERROR IN miami.R:\nTHE region PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(region, collapse = " "))
-                stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-            }
-            tempo2 <- strsplit(x = tempo, split = ":")
-            chr_region <- sapply(X = tempo2, FUN = function(x){x[1]})
-            chr_region <- gsub(x = chr_region, pattern = " ", replacement = "")
-            coord_region <- sapply(X = tempo2, FUN = function(x){x[2]})
-            tempo3 <- strsplit(x = coord_region, split = "-")
-            xmin_region <- sapply(X = tempo3, FUN = function(x){x[1]})
-            xmin_region <- gsub(x = xmin_region, pattern = " ", replacement = "")
-            xmax_region <- sapply(X = tempo3, FUN = function(x){x[2]})
-            xmax_region <- gsub(x = xmax_region, pattern = " ", replacement = "")
-            if(any(grepl(xmin_region, pattern = "\\D")) | any(grepl(xmax_region, pattern = "\\D"))){# normally no NA with is.null()
-                tempo.cat <- paste0("ERROR IN miami.R:\nTHE region PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(region, collapse = " "))
-                stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-            }else{
-                xmin_region <- as.integer(xmin_region)
-                xmax_region <- as.integer(xmax_region)
-                if(any(xmax_region - xmin_region < 0)){
-                    tempo.cat <- paste0("ERROR IN miami.R:\nTHE region PARAMETER MUST BE WRITTEN WITH ORDERED COORDINATES, LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\", IF COORDINATES ARE SPECIFIED: \n", paste0(region, collapse = " "))
-                    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-                }
-            }
-        }else{
-            chr_region <- tempo
-            coord_region <- NULL
-            xmin_region <- NULL
-            xmax_region <- NULL
-        }
-        # modification of the chr object for restricted plotting
-        tempo <- gsub(x = chr_region, pattern = "chr", replacement = "")
-        tempo <- as.integer(tempo)
-        if(any(diff(tempo) < 0)){
-            tempo.cat <- paste0("ERROR IN miami.R:\nTHE region PARAMETER MUST BE WRITTEN WITH ORDERED CHROMOSOMES, LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\": \n", paste0(region, collapse = " "))
-            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-        }
-        tempo.coord <- which(chr$CHR %in% chr_region) # which rows of chr to take for plotting
-        if(any(chr$BP_LENGTH[tempo.coord] - xmax_region < 0)){
-            tempo.cat <- paste0("ERROR IN miami.R:\nTHE region PARAMETER HAS AT LEAST ONE COORDINATE THAT IS ABOVE THE MAX LENGTH OF THE CHROMO.\nCHROMO LENGTH: ", paste0(chr$BP_LENGTH[tempo.coord], collapse = " "), "\nMAX COORDINATE: ", paste0(xmax_region, collapse = " "))
-            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-        }
-        if(tempo.coord[1] > 1){
-            xmin_plot <- chr$LENGTH_CUMUL[tempo.coord[1] - 1]
-        }
-        chr <- chr[tempo.coord[1]:tempo.coord[length(tempo.coord)], ]
-        if( ! is.null(coord_region)){
-            xmin_plot <- xmin_plot + xmin_region[1] # the left boundary of the plot is corrected
-            chr$LENGTH_CUMUL[nrow(chr)] <- chr$LENGTH_CUMUL[nrow(chr)] - chr$BP_LENGTH[nrow(chr)] + xmax_region[length(xmax_region)] # the right boundary of the plot is corrected
-            chr$CHR_NAME_POS <- (c(xmin_plot, chr$LENGTH_CUMUL[-nrow(chr)]) + chr$LENGTH_CUMUL) / 2 # the positions of names in the x-axis of the plot are corrected
-        }
-        # restriction of obs
-        obs <- obs[obs$coord >= xmin_plot & obs$coord <= chr$LENGTH_CUMUL[nrow(chr)], ]
+    tempo <- strsplit(x = x.lim, split = ",")[[1]]
+    tempo <- gsub(x = tempo, pattern = " ", replacement = "")
+    if( ! all(grepl(x = tempo, pattern = "^chr.+"))){
+        tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST START WITH \"chr\" IF NOT \"none\":\n", paste0(x_lim, collapse = " "))
+        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
     }
+    if(any(grepl(x = tempo, pattern = ":"))){
+        # means that there are coordinates
+        if( ! all(grepl(tempo, pattern = "-"))){# normally no NA with is.null()
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+        }
+        tempo2 <- strsplit(x = tempo, split = ":")
+        chr_x_lim <- sapply(X = tempo2, FUN = function(x){x[1]})
+        chr_x_lim <- gsub(x = chr_x_lim, pattern = " ", replacement = "")
+        coord_x_lim <- sapply(X = tempo2, FUN = function(x){x[2]})
+        tempo3 <- strsplit(x = coord_x_lim, split = "-")
+        xmin_x_lim <- sapply(X = tempo3, FUN = function(x){x[1]})
+        xmin_x_lim <- gsub(x = xmin_x_lim, pattern = " ", replacement = "")
+        xmax_x_lim <- sapply(X = tempo3, FUN = function(x){x[2]})
+        xmax_x_lim <- gsub(x = xmax_x_lim, pattern = " ", replacement = "")
+        if(any(grepl(xmin_x_lim, pattern = "\\D")) | any(grepl(xmax_x_lim, pattern = "\\D"))){# normally no NA with is.null()
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+        }else{
+            xmin_x_lim <- as.integer(xmin_x_lim)
+            xmax_x_lim <- as.integer(xmax_x_lim)
+            if(any(xmax_x_lim - xmin_x_lim < 0)){
+                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN WITH ORDERED COORDINATES, LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\", IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+                stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+            }
+        }
+    }else{
+        chr_x_lim <- tempo
+        coord_x_lim <- NULL
+        xmin_x_lim <- NULL
+        xmax_x_lim <- NULL
+    }
+    # modification of the chr object for restricted plotting
+    tempo.coord <- which(chr$CHR %in% chr_x_lim) # which rows of chr to take for plotting
+    if(any(chr$BP_LENGTH[tempo.coord] - xmax_x_lim < 0)){
+        tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER HAS AT LEAST ONE COORDINATE THAT IS ABOVE THE MAX LENGTH OF THE CHROMO.\nCHROMO LENGTH: ", paste0(chr$BP_LENGTH[tempo.coord], collapse = " "), "\nMAX COORDINATE: ", paste0(xmax_x_lim, collapse = " "))
+        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+    }
+    if(tempo.coord[1] > 1){
+        xmin_plot <- chr$LENGTH_CUMUL[tempo.coord[1] - 1]
+    }
+    chr <- chr[tempo.coord[1]:tempo.coord[length(tempo.coord)], ]
+    if( ! is.null(coord_x_lim)){
+        xmin_plot <- xmin_plot + xmin_x_lim[1] # the left boundary of the plot is corrected
+        chr$LENGTH_CUMUL[nrow(chr)] <- chr$LENGTH_CUMUL[nrow(chr)] - chr$BP_LENGTH[nrow(chr)] + xmax_x_lim[length(xmax_x_lim)] # the right boundary of the plot is corrected
+        chr$CHR_NAME_POS <- (c(xmin_plot, chr$LENGTH_CUMUL[-nrow(chr)]) + chr$LENGTH_CUMUL) / 2 # the positions of names in the x-axis of the plot are corrected
+    }
+    # restriction of obs
+    obs <- obs[obs$coord >= xmin_plot & obs$coord <= chr$LENGTH_CUMUL[nrow(chr)], ]
 }else{
     tempo.warn <- paste0("EMPTY fisher FILE: NO PLOT DRAWN")
     fun_report(data = paste0("WARNING\n", tempo.warn), output = log, path = "./", overwrite = FALSE)
@@ -479,22 +477,23 @@ if(length(obs) > 0 & nrow(obs) > 0){
 #fun_open(width = 12, height = 4, pdf.name = paste0("plot_read_length_", kind)) # must be systematically opened for main.nf
 png(filename = paste0("miami.png"), width = 3600, height = 1800, units = "px", res = 300)
 
-
-if(length(obs) > 0 & nrow(obs) > 0){
+if(empty.obs == TRUE){
+    fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE region PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE"))
+}else if(length(obs) > 0 & nrow(obs) > 0){
     marging <- (chr$LENGTH_CUMUL[nrow(chr)] - xmin_plot) * 0.02
     tempo.gg.name <- "gg.indiv.plot."
     tempo.gg.count <- 0
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot(obs, aes_string(x = "coord", y = "NEG_LOG10_P_VALUE")))
-    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes(color=as.factor(CHROM)), alpha=0.5, size=1))
     if(is.null(color.column)){
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes(color = as.factor(CHROM)), alpha=0.5, size=1))
         assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
     }else{
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes_string(color = color.column), alpha=0.5, size=1))
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_colour_gradient2())
     }
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::ggtitle(
-        paste0("region: ", region, ", x.lim: ", x.lim, ", y.lim1: ", y.lim1, ", y.lim2: ", y.lim2)
-        ))
+        paste0("x.lim: ", ifelse(x.lim == whole, "whole genome", x.lim))
+    ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_x_continuous(
         expand = c(0, 0), # remove space after after axis limits
         oob = scales::rescale_none,
@@ -511,7 +510,7 @@ if(length(obs) > 0 & nrow(obs) > 0){
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme_bw())
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme(
         plot.title = ggplot2::element_text(size = 8), 
-        legend.position="none",
+        legend.position=if(is.null(bottom.y.column)){"none"},
         panel.border = element_blank(),
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -525,21 +524,21 @@ if(length(obs) > 0 & nrow(obs) > 0){
         yend = -0.05, 
         size = 1
     ))
-
+    
     fin.plot1 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name, 1:tempo.gg.count), collapse = " + ")))))
-
+    
     if(is.null(bottom.y.column)){
         suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, ncol=1, nrow = 1)))
     }else{
         tempo.gg.name2 <- "gg.indiv.plot."
         tempo.gg.count2 <- 0
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), ggplot(obs, aes_string(x = "coord", y = bottom.y.column)))
-        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes(color=as.factor(CHROM)), alpha=0.5, size=1))
         if(is.null(color.column)){
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes(color = as.factor(CHROM)), alpha=0.5, size=1))
             assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
         }else{
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes_string(color = color.column), alpha=0.5, size=1))
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_colour_gradient2())
         }
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_x_continuous(
             expand = c(0, 0), # remove space after after axis limits
@@ -565,11 +564,11 @@ if(length(obs) > 0 & nrow(obs) > 0){
             axis.ticks.x=element_blank()
         ))
         fin.plot2 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name2, 1:tempo.gg.count2), collapse = " + ")))))
-
+        
         suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, fin.plot2, ncol=1, nrow = 2)))
     }
 }else{
-    fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\n", ifelse(x.lim == "region" | region == "none", "THE region OR x_lim PARAMETERS\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE")))
+    fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE x_lim PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE OR region PARAMETER"))
 }
 
 
