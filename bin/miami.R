@@ -246,7 +246,11 @@ ee <- expression(arg.check <- c(arg.check, tempo$problem) , text.check <- c(text
 tempo <- fun_check(data = fisher, class = "vector", typeof = "character", length = 1) ; eval(ee)
 tempo <- fun_check(data = chr.path, class = "vector", typeof = "character", length = 1) ; eval(ee)
 # tempo <- fun_check(data = cute, class = "vector", typeof = "character", length = 1) ; eval(ee) # check above
-tempo <- fun_check(data = x.lim, class = "vector", typeof = "character", length = 1) ; eval(ee)
+if(all(x.lim != "NULL")){
+    tempo <- fun_check(data = x.lim, class = "vector", typeof = "character", length = 1) ; eval(ee)
+}else{
+    x.lim <- NULL
+}
 if(all(bottom.y.column != "NULL")){
     tempo <- fun_check(data = bottom.y.column, class = "vector", typeof = "character", length = 1) ; eval(ee)
 }else{
@@ -285,7 +289,6 @@ if(any(arg.check) == TRUE){ # normally no NA
 tempo.arg <-c(
     "fisher",
     "chr.path", 
-    "x.lim", 
     "y.lim1", 
     "y.lim2",
     "log"
@@ -406,67 +409,68 @@ if(length(obs) > 0 & nrow(obs) > 0){
     }
     # preparation of the x coordinates: three solutions: 1) whole object (see above), 2) single chromo "chr7" or "chr7:0-15", 3) several chromo chr7, chr8" or "chr7:0-15, chr8" or "chr7:0-15, chr8:0-20"
     # The idea is to select rows of chr and potentially restrict some chr limits
-    tempo <- strsplit(x = x.lim, split = ",")[[1]]
-    tempo <- gsub(x = tempo, pattern = " ", replacement = "")
-    if( ! all(grepl(x = tempo, pattern = "^chr.+"))){
-        tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST START WITH \"chr\" IF NOT \"none\":\n", paste0(x_lim, collapse = " "))
-        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-    }
-    if(any(grepl(x = tempo, pattern = ":"))){
-        # means that there are coordinates
-        if( ! all(grepl(tempo, pattern = "-"))){# normally no NA with is.null()
-            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+    if( ! is.null(x.lim)){
+        tempo <- strsplit(x = x.lim, split = ",")[[1]]
+        tempo <- gsub(x = tempo, pattern = " ", replacement = "")
+        if( ! all(grepl(x = tempo, pattern = "^chr.+"))){
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST START WITH \"chr\" IF NOT \"none\":\n", paste0(x_lim, collapse = " "))
             stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
         }
-        tempo2 <- strsplit(x = tempo, split = ":")
-        chr_x_lim <- sapply(X = tempo2, FUN = function(x){x[1]})
-        chr_x_lim <- gsub(x = chr_x_lim, pattern = " ", replacement = "")
-        coord_x_lim <- sapply(X = tempo2, FUN = function(x){x[2]})
-        tempo3 <- strsplit(x = coord_x_lim, split = "-")
-        xmin_x_lim <- sapply(X = tempo3, FUN = function(x){x[1]})
-        xmin_x_lim <- gsub(x = xmin_x_lim, pattern = " ", replacement = "")
-        xmax_x_lim <- sapply(X = tempo3, FUN = function(x){x[2]})
-        xmax_x_lim <- gsub(x = xmax_x_lim, pattern = " ", replacement = "")
-        if(any(grepl(xmin_x_lim, pattern = "\\D")) | any(grepl(xmax_x_lim, pattern = "\\D"))){# normally no NA with is.null()
-            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
-            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-        }else{
-            xmin_x_lim <- as.integer(xmin_x_lim)
-            xmax_x_lim <- as.integer(xmax_x_lim)
-            if(any(xmax_x_lim - xmin_x_lim < 0)){
-                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN WITH ORDERED COORDINATES, LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\", IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+        if(any(grepl(x = tempo, pattern = ":"))){
+            # means that there are coordinates
+            if( ! all(grepl(tempo, pattern = "-"))){# normally no NA with is.null()
+                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
                 stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
             }
+            tempo2 <- strsplit(x = tempo, split = ":")
+            chr_x_lim <- sapply(X = tempo2, FUN = function(x){x[1]})
+            chr_x_lim <- gsub(x = chr_x_lim, pattern = " ", replacement = "")
+            coord_x_lim <- sapply(X = tempo2, FUN = function(x){x[2]})
+            tempo3 <- strsplit(x = coord_x_lim, split = "-")
+            xmin_x_lim <- sapply(X = tempo3, FUN = function(x){x[1]})
+            xmin_x_lim <- gsub(x = xmin_x_lim, pattern = " ", replacement = "")
+            xmax_x_lim <- sapply(X = tempo3, FUN = function(x){x[2]})
+            xmax_x_lim <- gsub(x = xmax_x_lim, pattern = " ", replacement = "")
+            if(any(grepl(xmin_x_lim, pattern = "\\D")) | any(grepl(xmax_x_lim, pattern = "\\D"))){# normally no NA with is.null()
+                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+                stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+            }else{
+                xmin_x_lim <- as.integer(xmin_x_lim)
+                xmax_x_lim <- as.integer(xmax_x_lim)
+                if(any(xmax_x_lim - xmin_x_lim < 0)){
+                    tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN WITH ORDERED COORDINATES, LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\", IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+                    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+                }
+            }
+        }else{
+            chr_x_lim <- tempo
+            coord_x_lim <- NULL
+            xmin_x_lim <- NULL
+            xmax_x_lim <- NULL
         }
+        # modification of the chr object for restricted plotting
+        tempo.coord <- which(chr$CHR %in% chr_x_lim) # which rows of chr to take for plotting
+        if(any(chr$BP_LENGTH[tempo.coord] - xmax_x_lim < 0)){
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER HAS AT LEAST ONE COORDINATE THAT IS ABOVE THE MAX LENGTH OF THE CHROMO.\nCHROMO LENGTH: ", paste0(chr$BP_LENGTH[tempo.coord], collapse = " "), "\nMAX COORDINATE: ", paste0(xmax_x_lim, collapse = " "))
+            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+        }
+        if(tempo.coord[1] > 1){
+            xmin_plot <- chr$LENGTH_CUMUL[tempo.coord[1] - 1]
+        }
+        chr <- chr[tempo.coord[1]:tempo.coord[length(tempo.coord)], ]
+        if( ! is.null(coord_x_lim)){
+            xmin_plot <- xmin_plot + xmin_x_lim[1] # the left boundary of the plot is corrected
+            chr$LENGTH_CUMUL[nrow(chr)] <- chr$LENGTH_CUMUL[nrow(chr)] - chr$BP_LENGTH[nrow(chr)] + xmax_x_lim[length(xmax_x_lim)] # the right boundary of the plot is corrected
+            chr$CHR_NAME_POS <- (c(xmin_plot, chr$LENGTH_CUMUL[-nrow(chr)]) + chr$LENGTH_CUMUL) / 2 # the positions of names in the x-axis of the plot are corrected
+        }
+        # restriction of obs
+        obs <- obs[obs$coord >= xmin_plot & obs$coord <= chr$LENGTH_CUMUL[nrow(chr)], ]
     }else{
-        chr_x_lim <- tempo
-        coord_x_lim <- NULL
-        xmin_x_lim <- NULL
-        xmax_x_lim <- NULL
+        tempo.warn <- paste0("x.lim is NULL: NO PLOT DRAWN")
+        fun_report(data = paste0("WARNING\n", tempo.warn), output = log, path = "./", overwrite = FALSE)
+        warn <- paste0(ifelse(is.null(warn), tempo.warn, paste0(warn, "\n\n", tempo.warn)))
     }
-    # modification of the chr object for restricted plotting
-    tempo.coord <- which(chr$CHR %in% chr_x_lim) # which rows of chr to take for plotting
-    if(any(chr$BP_LENGTH[tempo.coord] - xmax_x_lim < 0)){
-        tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER HAS AT LEAST ONE COORDINATE THAT IS ABOVE THE MAX LENGTH OF THE CHROMO.\nCHROMO LENGTH: ", paste0(chr$BP_LENGTH[tempo.coord], collapse = " "), "\nMAX COORDINATE: ", paste0(xmax_x_lim, collapse = " "))
-        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-    }
-    if(tempo.coord[1] > 1){
-        xmin_plot <- chr$LENGTH_CUMUL[tempo.coord[1] - 1]
-    }
-    chr <- chr[tempo.coord[1]:tempo.coord[length(tempo.coord)], ]
-    if( ! is.null(coord_x_lim)){
-        xmin_plot <- xmin_plot + xmin_x_lim[1] # the left boundary of the plot is corrected
-        chr$LENGTH_CUMUL[nrow(chr)] <- chr$LENGTH_CUMUL[nrow(chr)] - chr$BP_LENGTH[nrow(chr)] + xmax_x_lim[length(xmax_x_lim)] # the right boundary of the plot is corrected
-        chr$CHR_NAME_POS <- (c(xmin_plot, chr$LENGTH_CUMUL[-nrow(chr)]) + chr$LENGTH_CUMUL) / 2 # the positions of names in the x-axis of the plot are corrected
-    }
-    # restriction of obs
-    obs <- obs[obs$coord >= xmin_plot & obs$coord <= chr$LENGTH_CUMUL[nrow(chr)], ]
-}else{
-    tempo.warn <- paste0("EMPTY fisher FILE: NO PLOT DRAWN")
-    fun_report(data = paste0("WARNING\n", tempo.warn), output = log, path = "./", overwrite = FALSE)
-    warn <- paste0(ifelse(is.null(warn), tempo.warn, paste0(warn, "\n\n", tempo.warn)))
 }
-
 
 ############ end modifications of imported tables
 
@@ -479,7 +483,7 @@ png(filename = paste0("miami.png"), width = 3600, height = 1800, units = "px", r
 
 if(empty.obs == TRUE){
     fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE region PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE"))
-}else if(length(obs) > 0 & nrow(obs) > 0){
+}else if(length(obs) > 0 & nrow(obs) > 0 & ! is.null(x.lim)){
     marging <- (chr$LENGTH_CUMUL[nrow(chr)] - xmin_plot) * 0.02
     tempo.gg.name <- "gg.indiv.plot."
     tempo.gg.count <- 0
@@ -568,8 +572,8 @@ if(empty.obs == TRUE){
         suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, fin.plot2, ncol=1, nrow = 2)))
     }
 }else{
-    fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE x_lim PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE OR region PARAMETER"))
-}
+    fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE x_lim PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE\nOR THE RANGE OF THE region PARAMETER\nOR NULL"))
+} #else already dealt above
 
 
 
