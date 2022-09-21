@@ -94,7 +94,7 @@ sudo mount -t drvfs $DRIVE: /mnt/share
 
 Warning: if no mounting, it is possible that nextflow does nothing, or displays a message like
 ```
-Launching `main.nf` [loving_morse] - revision: d5aabe528b
+Launching `fisher_for_vcf.nf` [loving_morse] - revision: d5aabe528b
 /mnt/share/Users
 ```
 
@@ -147,7 +147,7 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 Start with:
 
 ```bash
-EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/fisher_for_vcf" # where the bin folder of the main.nf script is located
+EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/fisher_for_vcf" # where the bin folder of the fisher_for_vcf.nf script is located
 export CONF_BEFORE=/opt/gensoft/exe # on maestro
 
 export JAVA_CONF=java/13.0.2
@@ -167,10 +167,10 @@ module load ${JAVA_CONF} ${SINGU_CONF} ${GIT_CONF}
 Then run:
 
 ```bash
-# distant main.nf file
+# distant fisher_for_vcf.nf file
 /fisher_for_vcf/" ; nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r v1.0 -c $HOME/fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"
 
-# local main.nf file ($HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/. See NFX_HOME in the nextflow soft script)
+# local fisher_for_vcf.nf file ($HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/. See NFX_HOME in the nextflow soft script)
 HOME="$ZEUSHOME/fisher_for_vcf/" ; nextflow run --modules ${MODULES} fisher_for_vcf.nf -c fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"
 ```
 
