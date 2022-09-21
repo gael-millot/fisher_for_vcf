@@ -1,0 +1,7 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+2	cb/691615	10420	vcf_subfield_title (1)	CACHED	0	2022-09-19 17:26:22.550	3.6s	3.1s	40.8%	105 MB	219.8 MB	12.1 MB	3.1 KB
+4	66/e5e2d0	2680	fisher (1)	CACHED	0	2022-09-21 16:52:14.818	1m 56s	1m 55s	56.2%	183 MB	1.4 GB	16.6 MB	13.1 MB
+5	6b/1cdea0	4494	tsv2vcf (1)	CACHED	0	2022-09-21 16:54:11.021	2.8s	2.3s	27.8%	6.6 MB	42.2 MB	13.3 MB	13.3 MB
+1	c0/e6c03b	7462	WorkflowVersion	COMPLETED	0	2022-09-21 17:20:19.971	1.2s	456ms	15.6%	4.8 MB	38.4 MB	145 KB	6.5 KB
+3	1a/54a330	7676	Backup	COMPLETED	0	2022-09-21 17:20:21.170	577ms	5ms	25.4%	0	0	104.1 KB	332 B
+6	7b/b59ac4	7807	miami_plot (1)	COMPLETED	0	2022-09-21 17:20:21.758	4.5s	4s	59.6%	183.5 MB	319.3 MB	27.3 MB	83.6 KB

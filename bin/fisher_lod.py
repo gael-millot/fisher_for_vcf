@@ -43,6 +43,7 @@
 import csv
 import sys
 import re
+import os.path
 from cyvcf2 import VCF, Writer
 import scipy.stats as stats
 import pandas as pd
@@ -65,7 +66,7 @@ import warnings # for warnings.catch_warnings()
 
 
 vcf_path = sys.argv[1]  # 1st argument: pedigree file name, 1 ID par ligne, sys.argv takes arguments from the bash line command when running a .py script
-ped = sys.argv[2]
+ped_path = sys.argv[2]
 region = sys.argv[3]
 vcf_info_field_titles_path = sys.argv[4]
 tsv_extra_fields = sys.argv[5]
@@ -80,8 +81,8 @@ fisher_report = sys.argv[7]
 
 # vcf_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz"
 # vcf_path="/mnt/c/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz"
-# ped="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/Dyslexia.pedigree.txt" # functions for slivar
-# ped="/mnt/c/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/Dyslexia.pedigree.txt"
+# ped_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/Dyslexia.pedigree.txt" # functions for slivar
+# ped_path="/mnt/c/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/Dyslexia.pedigree.txt"
 # region=[‘chr7:0-147000000’, ‘chr10:1000000-2000000’]
 
 
@@ -230,8 +231,6 @@ csq_subfield_pos = [26]
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT)
                     locals()[i4] = ['NA']
 
-############ Problem about columns between df3 and df
-
             # f = open("test.txt", "a") ; f.write(str(list(range(0, len(subfield_pos)))))
             for i3 in list(range(0, len(subfield_pos))):
                 # f = open("test.txt", "a") ; f.write(str([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n' + str(impact) + '\n\n\n\n')
@@ -266,6 +265,26 @@ csq_subfield_pos = [26]
 # reserved words
 # end reserved words
 # argument primary checking
+if isinstance(vcf_path, str) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_path must be a single character string: \n"+" ".join(vcf_path)+"\n\n========\n\n")
+
+if isinstance(ped_path, str) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the ped_path must be a single character string: \n"+" ".join(ped_path)+"\n\n========\n\n")
+
+if isinstance(region, str) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the region must be a single character string: \n"+" ".join(region)+"\n\n========\n\n")
+
+if isinstance(vcf_info_field_titles_path, str) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_info_field_titles_path must be a single character string: \n"+" ".join(vcf_info_field_titles_path)+"\n\n========\n\n")
+
+if isinstance(tsv_extra_fields, str) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the tsv_extra_fields must be a single character string: \n"+" ".join(tsv_extra_fields)+"\n\n========\n\n")
+
+if isinstance(vcf_csq_subfield_titles_path, str) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_csq_subfield_titles_path must be a single character string: \n"+" ".join(vcf_csq_subfield_titles_path)+"\n\n========\n\n")
+
+if isinstance(fisher_report, str) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the fisher_report must be a single character string: \n"+" ".join(fisher_report)+"\n\n========\n\n")
 # end argument primary checking
 # second round of checking and data preparation
 # management of NA arguments
@@ -279,7 +298,19 @@ random.seed(1)
 # warn.count <- 0 # not required
 # end warning initiation
 # other checkings
+if os.path.exists(vcf_path) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_path file does not exist: \n"+" ".join(vcf_path)+"\n\n========\n\n")
+
+if os.path.exists(ped_path) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the ped_path file does not exist: \n"+" ".join(ped_path)+"\n\n========\n\n")
+
+if os.path.exists(vcf_info_field_titles_path) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_info_field_titles_path file does not exist: \n"+" ".join(vcf_info_field_titles_path)+"\n\n========\n\n")
+
 tsv_extra_fields = tsv_extra_fields.split(' ')
+
+if os.path.exists(vcf_csq_subfield_titles_path) is not True:
+    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_csq_subfield_titles_path file does not exist: \n"+" ".join(vcf_csq_subfield_titles_path)+"\n\n========\n\n")
 # end other checkings
 # reserved word checking
 # end reserved word checking
@@ -316,7 +347,7 @@ tsv_extra_fields = tsv_extra_fields.split(' ')
 
 # on crée un dictionnaire qui associe le phenotype a chaque barcode, ici c'est fait un lisant un fichier pedigree
 status = dict()
-with open(ped, 'r') as pin:
+with open(ped_path, 'r') as pin:
     pin = csv.reader(pin, delimiter='\t')
     for row in pin:
         status[row[1]]=int(row[5])
@@ -363,7 +394,7 @@ if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
                 tempo_pos.append(i2)
 
         if all([i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]) is not True:
-            sys.exit("Error in fisher_lod.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+" ".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+" ".join(vcf_csq_subfield_titles)+"\n")
+            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+" ".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+" ".join(vcf_csq_subfield_titles)+"\n\n========\n\n")
         else:
             for i2 in csq_subfield_name:
                 for i3 in list(range(0, len(vcf_csq_subfield_titles))):
@@ -372,10 +403,10 @@ if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
 
         tsv_extra_fields_wo_csq = [tsv_extra_fields[i1] for i1 in tempo_pos]
         if all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]) is not True:
-            sys.exit("Error in fisher_lod.py: not considering CSQ_, some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n")
+            sys.exit("\n\n========\n\nError in fisher_lod.py: not considering CSQ_, some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n\n========\n\n")
 
     elif all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields]) is not True:
-            sys.exit("Error in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n")
+            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n\n========\n\n")
 
     else:
         tsv_extra_fields_wo_csq = tsv_extra_fields

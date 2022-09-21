@@ -55,8 +55,8 @@ Return also a res.vcf file made from the red.tsv file, mimicing a VCF file, i.e.
 <br />
 | File | Description |
 | --- | --- |
-| **PL_family_WGS_fisher_1663355226** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf as sample_path |
-| **PL_family_WGS_fisher_1663355634** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz as sample_path |
+| **PL_family_WGS_fisher_1663772349** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf as sample_path |
+| **PL_family_WGS_fisher_1663773618** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz as sample_path |
 
 &nbsp;&nbsp;&nbsp;&nbsp;See the OUTPUT section for the description of the folder and files.
 
@@ -268,6 +268,11 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+
+### v1.6
+
+1) miami plot updated
 
 ### v1.5
 

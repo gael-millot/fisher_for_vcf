@@ -41,6 +41,8 @@ sample_path_test = file("${sample_path}") // to test if exist below
 tbi_path_test = file("${sample_path}.tbi") // to test if exist below
 ped_path_test = file("${ped_path}") // to test if exist below
 chr_path_test = file("${chr_path}") // to test if exist below
+cute_path_test = file("${cute_path}") // to test if exist below
+out_path_test = file("${out_path}") // to test if exist below
 
 //////// end Variables from config.file that need to be modified
 
@@ -84,27 +86,59 @@ if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miam
 
 //////// Checks
 
-if(system_exec == 'local' || system_exec == 'slurm'){
-    def file_exists1 = sample_path_test.exists()
-    if( ! file_exists1){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }else if(sample_path_test =~ /.*\.gz$/){
-        def file_exists2 = tbi_path_test.exists()
-        if( ! file_exists2){
-            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
-        }
+
+def file_exists1 = sample_path_test.exists()
+if( ! file_exists1){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+}else if(sample_path_test =~ /.*\.gz$/){
+    def file_exists2 = tbi_path_test.exists()
+    if( ! file_exists2){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
     }
-    def file_exists3 = ped_path_test.exists()
-    if( ! file_exists3){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN nextflow.config FILE: ${ped_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }
-    def file_exists4 = ped_path_test.exists()
-    if( ! file_exists4){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN nextflow.config FILE: ${chr_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }
-}else{
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID system_exec PARAMETER IN nextflow.config FILE: ${system_exec}\n\n========\n\n"
 }
+def file_exists3 = ped_path_test.exists()
+if( ! file_exists3){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN nextflow.config FILE: ${ped_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+}
+def file_exists4 = chr_path_test.exists()
+if( ! file_exists4){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN nextflow.config FILE: ${chr_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+}
+
+if( ! region in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID region PARAMETER IN nextflow.config FILE:\n${region}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! tsv_extra_fields in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID tsv_extra_fields PARAMETER IN nextflow.config FILE:\n${tsv_extra_fields}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! x_lim in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID x_lim PARAMETER IN nextflow.config FILE:\n${x_lim}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! bottom_y_column in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID bottom_y_column PARAMETER IN nextflow.config FILE:\n${bottom_y_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! color_column in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID color_column PARAMETER IN nextflow.config FILE:\n${color_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! y_lim1 in Integer ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim1 PARAMETER IN nextflow.config FILE:\n${y_lim1}\nMUST BE A SINGLE INTEGER\n\n========\n\n"
+}
+if( ! y_lim2 in Integer ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE INTEGER\n\n========\n\n"
+}
+def file_exists5 = cute_path_test.exists()
+if( ! file_exists5){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cute_path PARAMETER IN nextflow.config FILE:\n${cute_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+}
+
+if( ! (system_exec == 'local' || system_exec == 'slurm')){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID system_exec PARAMETER IN nextflow.config FILE:\n${system_exec}\n\n========\n\n"
+}
+def file_exists6 = out_path_test.exists()
+if( ! file_exists6){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID out_path PARAMETER IN nextflow.config FILE:\n${out_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+}
+
 
 //////// end Checks
 
