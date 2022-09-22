@@ -12,24 +12,29 @@
 */
 
 
-//////// Arguments of nextflow run
+//////// Options of nextflow run
 
 params.modules = ""
 
-//////// end Arguments of nextflow run
+//////// end Options of nextflow run
 
 
 //////// Variables
 
 // from the nextflow.config file
-config_file = file("${projectDir}/fisher_for_vcf.config")
+config_file = file("${projectDir}/fisher_for_vcf.config") // file() create a path object necessary o then create the file
 log_file = file("${launchDir}/.nextflow.log")
-cute_file=file(cute_path) // converted to file directly to use it as a constant
+
+// files objects created in order to use .exists() to test the path
+chr = file(chr_path)
+ped = file(ped_path)
+cute = file(cute_path) // converted to file path directly to use it as a constant
+out = file(out_path)
 // end from the nextflow.config file
 
-// from parameters
+// from parameters (options of the nexflow command line)
 modules = params.modules // remove the dot -> can be used in bash scripts
-// end from parameters
+// end from parameters (options of the nexflow command line)
 
 
 //////// end Variables
@@ -37,25 +42,22 @@ modules = params.modules // remove the dot -> can be used in bash scripts
 
 //////// Variables from config.file that need to be modified
 
-sample_path_test = file("${sample_path}") // to test if exist below
-tbi_path_test = file("${sample_path}.tbi") // to test if exist below
-ped_path_test = file("${ped_path}") // to test if exist below
-chr_path_test = file("${chr_path}") // to test if exist below
-cute_path_test = file("${cute_path}") // to test if exist below
-out_path_test = file("${out_path}") // to test if exist below
+
+if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miami plot
+    x_lim_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
+}else if(x_lim == 'region'){
+    x_lim_val = region
+}else{
+    x_lim_val = x_lim // value for the miami plot
+}
 
 //////// end Variables from config.file that need to be modified
 
 
 //////// Channels
 
-//// used once
 
 Channel.fromPath("${sample_path}", checkIfExists: false).into{vcf_ch1 ; vcf_ch2 ; vcf_ch3} // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-tbi_ch = Channel.fromPath("${sample_path}.tbi", checkIfExists: false) // Even if does not exist, it works. I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-ped_ch = Channel.fromPath("${ped_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-chr_ch = Channel.fromPath("${chr_path}", checkIfExists: false) // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-
 if(region == 'none'){  // for combine below for parallelization of the fisher process
     region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM")
 }else{
@@ -70,15 +72,6 @@ if(region == 'none'){  // for combine below for parallelization of the fisher pr
     region_ch = Channel.from(tempo4) 
 }
 
-if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miami plot
-    x_lim_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
-}else if(x_lim == 'region'){
-    x_lim_val = region
-}else{
-    x_lim_val = x_lim // value for the miami plot
-}
-
-//// end used once
 
 //////// end Channels
 
@@ -86,21 +79,23 @@ if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miam
 
 //////// Checks
 
+sample_path_test = file("${sample_path}") // because is a channel
+tbi_test = file("${sample_path}.tbi")
 
 def file_exists1 = sample_path_test.exists()
 if( ! file_exists1){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-}else if(sample_path_test =~ /.*\.gz$/){
-    def file_exists2 = tbi_path_test.exists()
+}else if(sample_path =~ /.*\.gz$/){
+    def file_exists2 = tbi_test.exists()
     if( ! file_exists2){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
     }
 }
-def file_exists3 = ped_path_test.exists()
+def file_exists3 = ped.exists()
 if( ! file_exists3){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN nextflow.config FILE: ${ped_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
 }
-def file_exists4 = chr_path_test.exists()
+def file_exists4 = chr.exists()
 if( ! file_exists4){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN nextflow.config FILE: ${chr_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
 }
@@ -126,18 +121,21 @@ if( ! y_lim1 in Integer ){
 if( ! y_lim2 in Integer ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE INTEGER\n\n========\n\n"
 }
-def file_exists5 = cute_path_test.exists()
+def file_exists5 = cute.exists()
 if( ! file_exists5){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cute_path PARAMETER IN nextflow.config FILE:\n${cute_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
 }
 
-if( ! (system_exec == 'local' || system_exec == 'slurm')){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID system_exec PARAMETER IN nextflow.config FILE:\n${system_exec}\n\n========\n\n"
-}
-def file_exists6 = out_path_test.exists()
-if( ! file_exists6){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID out_path PARAMETER IN nextflow.config FILE:\n${out_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-}
+// below : those variable are already used in the config file. Thus, to late to check them. And not possible to check inside the config file
+// system_exec
+// out_ini
+print("\n\nWARNING: PARAMETERS ALREADY INTERPRETED IN THE .config FILE:")
+print("    system_exec: ${system_exec}")
+print("    out_path: ${out_path_ini}")
+print("    queue: ${queue}")
+print("    qos: ${qos}")
+print("    add_options: ${add_options}")
+print("\n\n")
 
 
 //////// end Checks
@@ -149,7 +147,7 @@ if( ! file_exists6){
 
 process WorkflowVersion { // create a file with the workflow version in out_path
     label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}/reports", mode: 'copy'
+    publishDir "${out}/reports", mode: 'copy'
     cache 'false'
 
     output:
@@ -166,26 +164,26 @@ process WorkflowVersion { // create a file with the workflow version in out_path
         echo "loaded modules (according to specification by the user thanks to the --modules argument of main.nf)": ${modules} >> Run_info.txt
     fi
     echo "Manifest's pipeline version: ${workflow.manifest.version}" >> Run_info.txt
-    echo "result path: ${out_path}" >> Run_info.txt
+    echo "result path: ${out}" >> Run_info.txt
     echo "nextflow version: ${nextflow.version}" >> Run_info.txt
     echo -e "\\n\\nIMPLICIT VARIABLES:\\n\\nlaunchDir (directory where the workflow is run): ${launchDir}\\nprojectDir (directory where the main.nf script is located): ${projectDir}\\nworkDir (directory where tasks temporary files are created): ${workDir}" >> Run_info.txt
-    echo -e "\\n\\nUSER VARIABLES:\\n\\nout_path: ${out_path}\\nsample_path: ${sample_path}" >> Run_info.txt
+    echo -e "\\n\\nUSER VARIABLES:\\n\\nout_path: ${out}\\nsample_path: ${sample_path}" >> Run_info.txt
     """
 }
 //${projectDir} nextflow variable
 //${workflow.commandLine} nextflow variable
 //${workflow.manifest.version} nextflow variable
-//Note that variables like ${out_path} are interpreted in the script block
+//Note that variables like ${out} are interpreted in the script block
 
 
 process vcf_subfield_title {
     label 'r_ext' // see the withLabel: bash in the nextflow config file
-    publishDir "${out_path}", mode: 'copy', pattern: "{*.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out}", mode: 'copy', pattern: "{*.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
     file vcf from vcf_ch1
-    file cute_file
+    file cute
 
     output:
     file "vcf_info_field_titles.txt" into vcf_info_field_titles_ch
@@ -194,20 +192,20 @@ process vcf_subfield_title {
     script:
     """
     #!/bin/bash -ue
-    vcf_subfield_title.R ${vcf} "${cute_file}" "miami_report.txt"
+    vcf_subfield_title.R ${vcf} "${cute}" "miami_report.txt"
     """
 }
 
 
 process fisher {
     label 'python' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}/reports", mode: 'copy', pattern: "{fisher_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out}/reports", mode: 'copy', pattern: "{fisher_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
     tuple val(region2), file(vcf) from region_ch.combine(vcf_ch2) // parallelization expected for each value of region_ch
-    file ped from ped_ch.first()
-    file tbi from tbi_ch.first()
+    file ped
+    file tbi
     file vcf_info_field_titles from vcf_info_field_titles_ch
     file vcf_csq_subfield_titles from vcf_csq_subfield_titles_ch
     val tsv_extra_fields
@@ -224,24 +222,24 @@ process fisher {
 }
 
 fisher_ch1.collectFile(name: "fisher.tsv", skip:1, keepHeader:true).into{fisher_ch2 ; fisher_ch3 ; fisher_ch4}
-fisher_ch2.subscribe{it -> it.copyTo("${out_path}")}
+fisher_ch2.subscribe{it -> it.copyTo("${out}")}
 
 
 process miami_plot {
     label 'r_ext' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-    publishDir "${out_path}/reports", mode: 'copy', pattern: "{miami_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out}", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out}/reports", mode: 'copy', pattern: "{miami_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
     file fisher from fisher_ch3
-    file chr from chr_ch
+    file chr
     val x_lim_val
     val bottom_y_column
     val color_column
     val y_lim1
     val y_lim2
-    file cute_file
+    file cute
 
     output:
     file "*.png"
@@ -250,14 +248,14 @@ process miami_plot {
     script:
     """
     #!/bin/bash -ue
-    miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute_file}" "miami_report.txt"
+    miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute}" "miami_report.txt"
     """
 }
 
 
 process tsv2vcf {
     label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}", mode: 'copy', pattern: "{*.vcf}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out}", mode: 'copy', pattern: "{*.vcf}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
@@ -314,7 +312,7 @@ process tsv2vcf {
 
 process Backup {
     label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}/reports", mode: 'copy', overwrite: false // since I am in mode copy, all the output files will be copied into the publishDir. See \\wsl$\Ubuntu-20.04\home\gael\work\aa\a0e9a739acae026fb205bc3fc21f9b
+    publishDir "${out}/reports", mode: 'copy', overwrite: false // since I am in mode copy, all the output files will be copied into the publishDir. See \\wsl$\Ubuntu-20.04\home\gael\work\aa\a0e9a739acae026fb205bc3fc21f9b
     cache 'false'
 
     input:

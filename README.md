@@ -269,39 +269,43 @@ Gitlab developers
 <br /><br />
 ## WHAT'S NEW IN
 
+### v1.7
+
+Code improved
+
 
 ### v1.6
 
-1) miami plot updated
+miami plot updated
 
 ### v1.5
 
-1) fields of the VCF (like AC or subfield of CSQ like SIFT) can be added into the tsv file
+fields of the VCF (like AC or subfield of CSQ like SIFT) can be added into the tsv file
 
 
 ### v1.4
 
-1) now the script deals with .gz and non .gz vcf
+now the script deals with .gz and non .gz vcf
 
 
 ### v1.3
 
-1) INFO column added in the .tsv file
+INFO column added in the .tsv file
 
 
 ### v1.2
 
-1) Now the Miami plot can be zoomed on a particular region thanks to the region and x_lim parameters. Remain to get the correct INFO column in the .py code
+Now the Miami plot can be zoomed on a particular region thanks to the region and x_lim parameters. Remain to get the correct INFO column in the .py code
 
 
 ### v1.1
 
-1) Miami plot improvement
+Miami plot improvement
 
 
 ### v1.0
 
-1) everything
+everything
 
 
 
