@@ -31,7 +31,7 @@ Return a res.tsv file and a Miami plot.
 <br /><br />
 The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
 <br /><br />
-Return also a res.vcf file made from the red.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
+Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
 
 <br /><br />
 ## CONTENT
@@ -268,6 +268,12 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+
+### v1.8
+
+Code improved
+
 
 ### v1.7
 

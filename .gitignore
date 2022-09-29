@@ -3,3 +3,6 @@ singularity/
 results/
 .nextflow/
 .nextflow*
+dataset/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf
+dataset/fisher.tsv
+dataset/res.vcf
