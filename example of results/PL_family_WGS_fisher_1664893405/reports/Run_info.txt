@@ -1,9 +1,9 @@
 Project (empty means no .git folder where the main.nf file is present):  origin git@gitlab.pasteur.fr:gmillot/fisher_for_vcf.git (fetch)
-Git info (empty means no .git folder where the main.nf file is present):  v1.8-dirty
-Cmd line: nextflow run fisher_for_vcf.nf -c fisher_for_vcf.config -resume
+Git info (empty means no .git folder where the main.nf file is present):  v1.9-dirty
+Cmd line: nextflow run fisher_for_vcf.nf -c fisher_for_vcf.config
 execution mode: local
 Manifest's pipeline version: null
-result path: /mnt/c/Users/Gael/Documents/Git_projects/fisher_for_vcf/results/PL_family_WGS_fisher_1664887581
+result path: /mnt/c/Users/Gael/Documents/Git_projects/fisher_for_vcf/results/PL_family_WGS_fisher_1664893405
 nextflow version: 21.04.2
 
 
@@ -16,5 +16,5 @@ workDir (directory where tasks temporary files are created): /mnt/c/Users/Gael/D
 
 USER VARIABLES:
 
-out_path: /mnt/c/Users/Gael/Documents/Git_projects/fisher_for_vcf/results/PL_family_WGS_fisher_1664887581
+out_path: /mnt/c/Users/Gael/Documents/Git_projects/fisher_for_vcf/results/PL_family_WGS_fisher_1664893405
 sample_path: /mnt/c/Users/Gael/Documents/Git_projects/fisher_for_vcf/dataset/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz

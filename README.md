@@ -259,6 +259,12 @@ Gitlab developers
 <br /><br />
 ## WHAT'S NEW IN
 
+### v1.10
+
+Parall debugged<br />
+Check in python part improved
+
+
 ### v1.9
 
 Zipping added

@@ -190,11 +190,12 @@ process vcf_subfield_title {
     output:
     file "vcf_info_field_titles.txt" into vcf_info_field_titles_ch
     file "vcf_csq_subfield_titles.txt" into vcf_csq_subfield_titles_ch
+    file "vcf_subfield_title_report.txt"
 
     script:
     """
     #!/bin/bash -ue
-    vcf_subfield_title.R ${vcf} "${cute}" "miami_report.txt"
+    vcf_subfield_title.R ${vcf} "${cute}" "vcf_subfield_title_report.txt"
     """
 }
 
@@ -208,8 +209,8 @@ process fisher {
     tuple val(region2), file(vcf) from region_ch.combine(vcf_ch2) // parallelization expected for each value of region_ch
     file ped
     if(sample_path =~ /.*\.gz$/){file tbi}
-    file vcf_info_field_titles from vcf_info_field_titles_ch
-    file vcf_csq_subfield_titles from vcf_csq_subfield_titles_ch
+    file vcf_info_field_titles from vcf_info_field_titles_ch.first()
+    file vcf_csq_subfield_titles from vcf_csq_subfield_titles_ch.first()
     val tsv_extra_fields
 
     output:

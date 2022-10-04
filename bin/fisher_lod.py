@@ -50,6 +50,7 @@ import pandas as pd
 import numpy as np
 import random # for shuffle() function
 import warnings # for warnings.catch_warnings()
+from itertools import compress
 
 
 ################################ End Initialization
@@ -394,7 +395,7 @@ if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
                 tempo_pos.append(i2)
 
         if all([i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]) is not True:
-            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+" ".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+" ".join(vcf_csq_subfield_titles)+"\n\n========\n\n")
+            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+" ".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+" ".join(vcf_csq_subfield_titles)+"\nThe wrong fields are:\n"+" ".join(compress(vcf_csq_subfield_titles, [ not i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]))+"\n\n========\n\n")
         else:
             for i2 in csq_subfield_name:
                 for i3 in list(range(0, len(vcf_csq_subfield_titles))):
@@ -403,10 +404,10 @@ if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
 
         tsv_extra_fields_wo_csq = [tsv_extra_fields[i1] for i1 in tempo_pos]
         if all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]) is not True:
-            sys.exit("\n\n========\n\nError in fisher_lod.py: not considering CSQ_, some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n\n========\n\n")
+            sys.exit("\n\n========\n\nError in fisher_lod.py: not considering CSQ_, some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields_wo_csq)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\nThe wrong fields are:\n"+" ".join(compress(vcf_info_field_titles, [ not i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]))+"\n\n========\n\n")
 
     elif all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields]) is not True:
-            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\n\n========\n\n")
+            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\nThe wrong fields are:\n"+" ".join(compress(vcf_info_field_titles, [ not i1 in vcf_info_field_titles for i1 in tsv_extra_fields]))+"\n\n========\n\n")
 
     else:
         tsv_extra_fields_wo_csq = tsv_extra_fields
