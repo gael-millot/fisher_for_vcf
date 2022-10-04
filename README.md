@@ -51,13 +51,6 @@ Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e.
 
 **example_of_results**: folder containing examples of result obtained with the dataset.
 <br /><br />
-&nbsp;&nbsp;&nbsp;&nbsp;Two folders are present:
-<br />
-| File | Description |
-| --- | --- |
-| **PL_family_WGS_fisher_1663772349** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf as sample_path |
-| **PL_family_WGS_fisher_1663773618** | obtained using the dataset file Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz as sample_path |
-
 &nbsp;&nbsp;&nbsp;&nbsp;See the OUTPUT section for the description of the folder and files.
 
 
@@ -187,11 +180,11 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 ## OUTPUT
 
 
-**reports**: folder containing all the reports of the different processes including the *fisher_for_vcf.config* file used.
+**reports**: folder containing all the reports of the different processes including the *fisher_for_vcf.config* file used, *vcf_csq_subfield_titles.txt* (control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed), *vcf_info_field_titles.txt* (control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed)
 <br /><br />
 **Miami.png**: miami plot in the .png format.
 <br /><br />
-**res.tsv**: table
+**res.tsv.gz**: table
 <br /><br />
 &nbsp;&nbsp;&nbsp;&nbsp;Rows:
 <br />
@@ -223,11 +216,8 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 | ***\<NAME\>*** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
 
 <br /><br />
-**res.vcf**: file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
-<br /><br />
-**vcf_csq_subfield_titles.txt**: control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed.
-<br /><br />
-**vcf_info_field_titles.txt**: control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed.
+**res.vcf.gz**: file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
+.
 
 <br /><br />
 ## VERSIONS
@@ -268,6 +258,10 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v1.9
+
+Zipping added
 
 
 ### v1.8

@@ -89,6 +89,8 @@ if( ! file_exists1){
     def file_exists2 = tbi_test.exists()
     if( ! file_exists2){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
+    }else{
+        tbi = file("${sample_path}.tbi")
     }
 }
 def file_exists3 = ped.exists()
@@ -178,7 +180,7 @@ process WorkflowVersion { // create a file with the workflow version in out_path
 
 process vcf_subfield_title {
     label 'r_ext' // see the withLabel: bash in the nextflow config file
-    publishDir "${out}", mode: 'copy', pattern: "{*.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out}/reports", mode: 'copy', pattern: "{*.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
@@ -205,7 +207,7 @@ process fisher {
     input:
     tuple val(region2), file(vcf) from region_ch.combine(vcf_ch2) // parallelization expected for each value of region_ch
     file ped
-    file tbi
+    if(sample_path =~ /.*\.gz$/){file tbi}
     file vcf_info_field_titles from vcf_info_field_titles_ch
     file vcf_csq_subfield_titles from vcf_csq_subfield_titles_ch
     val tsv_extra_fields
@@ -221,8 +223,8 @@ process fisher {
     """
 }
 
-fisher_ch1.collectFile(name: "fisher.tsv", skip:1, keepHeader:true).into{fisher_ch2 ; fisher_ch3 ; fisher_ch4}
-fisher_ch2.subscribe{it -> it.copyTo("${out}")}
+fisher_ch1.collectFile(name: "fisher.tsv", skip:1, keepHeader:true).into{fisher_ch2 ; fisher_ch3 ; fisher_ch4 ; fisher_ch5}
+//fisher_ch2.subscribe{it -> it.copyTo("${out}")} // will be published below, after zipping
 
 
 process miami_plot {
@@ -255,7 +257,7 @@ process miami_plot {
 
 process tsv2vcf {
     label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out}", mode: 'copy', pattern: "{*.vcf}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out}", mode: 'copy', overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
@@ -263,7 +265,7 @@ process tsv2vcf {
     file fisher from fisher_ch4
 
     output:
-    file "res.vcf"
+    file "res.*"
 
     script:
     """
@@ -306,7 +308,32 @@ process tsv2vcf {
             print "\\n"
         }
     ' ${fisher} >> res.vcf
+    bgzip -f -l 9 res.vcf > res.vcf.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
+    tabix -p vcf res.vcf.gz # htslib command
     """
+}
+
+
+process tsv_compress {
+    label 'bash' // see the withLabel: bash in the nextflow config file 
+    publishDir path: "${out_path}", mode: 'copy', overwrite: false
+    cache 'true'
+
+    //no channel input here for the vcf, because I do not transform it
+    input:
+    file tsv from fisher_ch5
+    // see the scope for the use of affected_patients which is already a variable from .config file
+
+    output:
+    file "res.*"
+
+
+    script:
+    """
+    #!/bin/bash -ue
+    gzip -cf9 ${tsv} > res.tsv.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
+    """
+    // write ${} between "" to make a single argument when the variable is made of several values separated by a space. Otherwise, several arguments will be considered
 }
 
 

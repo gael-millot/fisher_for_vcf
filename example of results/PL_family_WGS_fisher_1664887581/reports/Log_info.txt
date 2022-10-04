@@ -1,0 +1,2 @@
+full .nextflow.log is in: /mnt/c/Users/Gael/Documents/Git_projects/fisher_for_vcf
+The one in the result folder is not complete (miss the end)
