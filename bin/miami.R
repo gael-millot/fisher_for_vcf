@@ -514,7 +514,7 @@ if(empty.obs == TRUE){
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme_bw())
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme(
         plot.title = ggplot2::element_text(size = 8), 
-        legend.position=if(is.null(bottom.y.column)){"none"},
+        legend.position=if(is.null(color.column)){"none"},
         panel.border = element_blank(),
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -559,7 +559,7 @@ if(empty.obs == TRUE){
         ))
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme_bw())
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme(
-            # legend.position="none", # this is to remove the graduit legend that is already present in the top graphic. Inactivated since I have to keep this legend to have x-axis alignment of the 2 plots
+            legend.position=if(is.null(color.column)){"none"},
             panel.border = element_blank(),
             panel.grid.major.x = element_blank(),
             panel.grid.minor.x = element_blank(),

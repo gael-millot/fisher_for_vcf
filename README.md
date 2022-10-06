@@ -260,6 +260,11 @@ Gitlab developers
 ## WHAT'S NEW IN
 
 
+### v2.1
+
+Miamiplot improved for right display of the color legend
+
+
 ### v2.0
 
 Code debugged because it was overwritting the ipunt file if named res.vcf.gz
