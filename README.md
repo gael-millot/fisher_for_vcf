@@ -31,7 +31,7 @@ Return a res.tsv file and a Miami plot.
 <br /><br />
 The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
 <br /><br />
-Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
+Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present. Thus, this VCF file cannot be used by fisher_for_vcf as initial input.
 
 <br /><br />
 ## CONTENT
@@ -140,7 +140,7 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 Start with:
 
 ```bash
-EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/fisher_for_vcf" # where the bin folder of the fisher_for_vcf.nf script is located
+EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron" # where the bin folder of the fisher_for_vcf.nf script is located
 export CONF_BEFORE=/opt/gensoft/exe # on maestro
 
 export JAVA_CONF=java/13.0.2
@@ -184,7 +184,7 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 <br /><br />
 **Miami.png**: miami plot in the .png format.
 <br /><br />
-**res.tsv.gz**: table
+**res_fisher.tsv.gz**: table
 <br /><br />
 &nbsp;&nbsp;&nbsp;&nbsp;Rows:
 <br />
@@ -216,7 +216,7 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 | ***\<NAME\>*** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
 
 <br /><br />
-**res.vcf.gz**: file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present.
+**res_fisher.vcf.gz**: file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present. Thus, this VCF file cannot be used by fisher_for_vcf as initial input.
 .
 
 <br /><br />
@@ -258,6 +258,12 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+
+### v2.0
+
+Code debugged because it was overwritting the ipunt file if named res.vcf.gz
+
 
 ### v1.10
 

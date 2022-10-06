@@ -559,7 +559,7 @@ if(empty.obs == TRUE){
         ))
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme_bw())
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme(
-            legend.position="none",
+            # legend.position="none", # this is to remove the graduit legend that is already present in the top graphic. Inactivated since I have to keep this legend to have x-axis alignment of the 2 plots
             panel.border = element_blank(),
             panel.grid.major.x = element_blank(),
             panel.grid.minor.x = element_blank(),

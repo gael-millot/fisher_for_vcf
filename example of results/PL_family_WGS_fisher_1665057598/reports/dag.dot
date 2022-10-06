@@ -1,0 +1,114 @@
+digraph "dag" {
+p0 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p1 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p0 -> p1;
+
+p1 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p23 [label="tsv2vcf"];
+p1 -> p23 [label="vcf_ch3"];
+
+p1 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p5 [label="vcf_subfield_title"];
+p1 -> p5 [label="vcf_ch1"];
+
+p1 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+p1 -> p6 [label="vcf_ch2"];
+
+p2 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.from"];
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+p2 -> p6 [label="region_ch"];
+
+p4 [shape=point,label="",fixedsize=true,width=0.1];
+p5 [label="vcf_subfield_title"];
+p4 -> p5 [label="cute"];
+
+p5 [label="vcf_subfield_title"];
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p5 -> p7 [label="vcf_info_field_titles_ch"];
+
+p5 [label="vcf_subfield_title"];
+p8 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p5 -> p8 [label="vcf_csq_subfield_titles_ch"];
+
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+p11 [label="fisher"];
+p6 -> p11;
+
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p11 [label="fisher"];
+p7 -> p11;
+
+p8 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="first"];
+p11 [label="fisher"];
+p8 -> p11;
+
+p9 [shape=point,label="",fixedsize=true,width=0.1];
+p11 [label="fisher"];
+p9 -> p11 [label="ped"];
+
+p10 [shape=point,label="",fixedsize=true,width=0.1];
+p11 [label="fisher"];
+p10 -> p11 [label="tsv_extra_fields"];
+
+p11 [label="fisher"];
+p12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collectFile"];
+p11 -> p12 [label="fisher_ch1"];
+
+p12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collectFile"];
+p13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p12 -> p13;
+
+p13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p14 [shape=point];
+p13 -> p14 [label="fisher_ch2"];
+
+p13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p24 [label="tsv_compress"];
+p13 -> p24 [label="fisher_ch5"];
+
+p13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p22 [label="miami_plot"];
+p13 -> p22 [label="fisher_ch3"];
+
+p13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p23 [label="tsv2vcf"];
+p13 -> p23 [label="fisher_ch4"];
+
+p15 [shape=point,label="",fixedsize=true,width=0.1];
+p22 [label="miami_plot"];
+p15 -> p22 [label="chr"];
+
+p16 [shape=point,label="",fixedsize=true,width=0.1];
+p22 [label="miami_plot"];
+p16 -> p22 [label="x_lim_val"];
+
+p17 [shape=point,label="",fixedsize=true,width=0.1];
+p22 [label="miami_plot"];
+p17 -> p22 [label="bottom_y_column"];
+
+p18 [shape=point,label="",fixedsize=true,width=0.1];
+p22 [label="miami_plot"];
+p18 -> p22 [label="color_column"];
+
+p19 [shape=point,label="",fixedsize=true,width=0.1];
+p22 [label="miami_plot"];
+p19 -> p22 [label="y_lim1"];
+
+p20 [shape=point,label="",fixedsize=true,width=0.1];
+p22 [label="miami_plot"];
+p20 -> p22 [label="y_lim2"];
+
+p21 [shape=point,label="",fixedsize=true,width=0.1];
+p22 [label="miami_plot"];
+p21 -> p22 [label="cute"];
+
+p25 [shape=point,label="",fixedsize=true,width=0.1];
+p27 [label="Backup"];
+p25 -> p27 [label="config_file"];
+
+p26 [shape=point,label="",fixedsize=true,width=0.1];
+p27 [label="Backup"];
+p26 -> p27 [label="log_file"];
+
+}

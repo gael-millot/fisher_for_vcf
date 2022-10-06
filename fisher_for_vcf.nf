@@ -266,14 +266,14 @@ process tsv2vcf {
     file fisher from fisher_ch4
 
     output:
-    file "res.*"
+    file "res_fisher.*"
 
     script:
     """
     #!/bin/bash -ue
     PREHEADER='##fileformat=VCFv4.2;build by fisher_for_vcf.nf\\n##WARNING: This file is not a true VCF since FORMAT AND sample (indiv) columns are not present'
     HEADER='#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO'
-    echo -e \$PREHEADER > res.vcf
+    echo -e \$PREHEADER > res_fisher.vcf
     FILENAME=\$(basename -- "${vcf}") # recover a file name without path
     FILE_EXTENSION="\${FILENAME##*.}" #  ## means "delete the longest regex starting at the beginning of the tested string". If nothing, delete nothing. Thus ##*. means delete the longest string finishing by a dot. Use # instead of ## for "delete the shortest regex starting at the beginning of the tested string"
     if [[ "\${FILE_EXTENSION}" =~ gz ]] ; then
@@ -283,7 +283,7 @@ process tsv2vcf {
             }else{
                 exit 0
             }
-        }' >> res.vcf
+        }' >> res_fisher.vcf
     else
         awk '{
             if(\$0 ~ "^##.*"){
@@ -291,7 +291,7 @@ process tsv2vcf {
             }else{
                 exit 0
             }
-        }' ${vcf} >> res.vcf
+        }' ${vcf} >> res_fisher.vcf
     fi
     awk -v var1=\$HEADER 'BEGIN{FS="\\t" ; OFS="" ; ORS=""}
         NR==1{
@@ -308,9 +308,9 @@ process tsv2vcf {
             for(i=6;i<=NF;i++){print \$i ; if(i < NF){print "|"}} ;
             print "\\n"
         }
-    ' ${fisher} >> res.vcf
-    bgzip -f -l 9 res.vcf > res.vcf.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
-    tabix -p vcf res.vcf.gz # htslib command
+    ' ${fisher} >> res_fisher.vcf
+    bgzip -f -l 9 res_fisher.vcf > res_fisher.vcf.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
+    tabix -p vcf res_fisher.vcf.gz # htslib command
     """
 }
 
@@ -326,13 +326,13 @@ process tsv_compress {
     // see the scope for the use of affected_patients which is already a variable from .config file
 
     output:
-    file "res.*"
+    file "res_fisher.*"
 
 
     script:
     """
     #!/bin/bash -ue
-    gzip -cf9 ${tsv} > res.tsv.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
+    gzip -cf9 ${tsv} > res_fisher.tsv.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
     """
     // write ${} between "" to make a single argument when the variable is made of several values separated by a space. Otherwise, several arguments will be considered
 }
