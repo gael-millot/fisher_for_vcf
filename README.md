@@ -145,7 +145,7 @@ export CONF_BEFORE=/opt/gensoft/exe # on maestro
 
 export JAVA_CONF=java/13.0.2
 export JAVA_CONF_AFTER=bin/java # on maestro
-export SINGU_CONF=singularity/3.8.3
+export SINGU_CONF=singularity
 export SINGU_CONF_AFTER=bin/singularity # on maestro
 export GIT_CONF=git/2.25.0
 export GIT_CONF_AFTER=bin/git # on maestro
@@ -161,10 +161,10 @@ Then run:
 
 ```bash
 # distant fisher_for_vcf.nf file
-/fisher_for_vcf/" ; nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r v1.0 -c $HOME/fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"
+HOME="${ZEUSHOME}/fisher_for_vcf/" ; trap '' SIGINT ; nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r v1.0 -c $HOME/fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"  ; trap SIGINT
 
 # local fisher_for_vcf.nf file ($HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/. See NFX_HOME in the nextflow soft script)
-HOME="$ZEUSHOME/fisher_for_vcf/" ; nextflow run --modules ${MODULES} fisher_for_vcf.nf -c fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"
+HOME="${ZEUSHOME}/fisher_for_vcf/" ; trap '' SIGINT ; nextflow run --modules ${MODULES} fisher_for_vcf.nf -c fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/" ; trap SIGINT
 ```
 
 If an error message appears, like:
@@ -175,6 +175,30 @@ Purge using:
 ```
 rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 ```
+
+
+### To get the miamiplot only
+
+Copy-paste this into a linux console
+
+```
+PWD=$(pwd)
+# see the fisher_for_vcf.config file for info about the parameters
+echo -e '
+fisher="dataset/res_fisher.tsv.gz"
+chr="dataset/hg19_grch37p5_chr_size_cumul.txt"
+x_lim="chr1"
+bottom_y_column="AF"
+color_column="NULL"
+y_lim1="NULL"
+y_lim2="NULL"
+cute="https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R"
+
+Rscript bin/miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute}" "miami_report.txt"
+' | sudo docker run --workdir /tempo/ -i --mount "type=bind,src=${PWD},dst=/tempo/" --entrypoint bash gmillot/r_v4.1.2_extended_v2.1:gitlab_v8.8
+```
+
+The outputs files are in $PWD, i.e., where the code has been executed.
 
 <br /><br />
 ## OUTPUT
@@ -258,6 +282,12 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+
+### v2.2
+
+bug fixed in miamiplot
+Now possible to get the miamiplot only (see the README file)
 
 
 ### v2.1

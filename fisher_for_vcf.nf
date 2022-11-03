@@ -1,3 +1,4 @@
+nextflow.enable.dsl=1
 /*
 #########################################################################
 ##                                                                     ##
@@ -44,7 +45,7 @@ modules = params.modules // remove the dot -> can be used in bash scripts
 
 
 if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miami plot
-    x_lim_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
+    x_lim_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" // I have added both notations "chr23", "chr24", "chr25" or "chrY", "chrX", "chrM" because either one or the other can be used in a VCF file 
 }else if(x_lim == 'region'){
     x_lim_val = region
 }else{
@@ -59,7 +60,7 @@ if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miam
 
 Channel.fromPath("${sample_path}", checkIfExists: false).into{vcf_ch1 ; vcf_ch2 ; vcf_ch3} // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
 if(region == 'none'){  // for combine below for parallelization of the fisher process
-    region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM")
+    region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM") // I have added both notations "chr23", "chr24", "chr25" or "chrY", "chrX", "chrM" because either one or the other can be used in a VCF file 
 }else{
     if(region =~ /,/){
         tempo = region.replaceAll(':.+,', ',')
@@ -117,11 +118,11 @@ if( ! bottom_y_column in String ){
 if( ! color_column in String ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID color_column PARAMETER IN nextflow.config FILE:\n${color_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
 }
-if( ! y_lim1 in Integer ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim1 PARAMETER IN nextflow.config FILE:\n${y_lim1}\nMUST BE A SINGLE INTEGER\n\n========\n\n"
+if( ! y_lim1 in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim1 PARAMETER IN nextflow.config FILE:\n${y_lim1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
 }
-if( ! y_lim2 in Integer ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE INTEGER\n\n========\n\n"
+if( ! y_lim2 in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
 }
 def file_exists5 = cute.exists()
 if( ! file_exists5){
@@ -131,6 +132,7 @@ if( ! file_exists5){
 // below : those variable are already used in the config file. Thus, to late to check them. And not possible to check inside the config file
 // system_exec
 // out_ini
+print("\n\nRESULT DIRECTORY: ${out_path}")
 print("\n\nWARNING: PARAMETERS ALREADY INTERPRETED IN THE .config FILE:")
 print("    system_exec: ${system_exec}")
 print("    out_path: ${out_path_ini}")
@@ -220,7 +222,12 @@ process fisher {
     script:
     """
     #!/bin/bash -ue
-    fisher_lod.py ${vcf} ${ped} "${region2}" ${vcf_info_field_titles} "${tsv_extra_fields}" "${vcf_csq_subfield_titles}" "fisher_report.txt"
+    if grep -Eq "FISHER" ${vcf_info_field_titles} ; then # does not work without [[]]
+        echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nTHE VCF FILE HAS ALREADY FISHER COMPUTATION PERFORMED, AS FIELDS ARE:\\n\$(cat ${vcf_info_field_titles})\\n\\n========\\n\\n"
+        exit 1
+    else
+        fisher_lod.py ${vcf} ${ped} "${region2}" ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} "fisher_report.txt"
+    fi
     """
 }
 
@@ -297,9 +304,9 @@ process tsv2vcf {
         NR==1{
             print "##WARNING: 5 first names of the header of the initial file: "\$1" "\$2" "\$3" "\$4" "\$5"\\n" ;
             print "##WARNING: if the 5 first columns of the .tsv file are not CHROM POS REF ALT INFO, then the .vcf file produced by this process is not good\\n" ;
-            print "##INFO=<FISHER=" ;
+            print "##INFO=<ID=FISHER,Number=.,Type=String,Description=\""Fisher exact tests based on the presence/absence of the variant in the affected/unaffected indiv. Format: " ;
             for(i=6;i<=NF;i++){print \$i ; if(i < NF){print "|"}} ;
-            print ">\\n" ;
+            print "\"">\\n" ;
             print var1"\\n"
         }
         NR > 1{

@@ -261,21 +261,15 @@ if(all(color.column != "NULL")){
 }else{
     color.column <- NULL
 }
-if(all(y.lim1 == "NULL")){
-    y.lim1 = NA
-}else if(length(y.lim1) != 1 & any(grepl(y.lim1, pattern = "\\D"))){# normally no NA with is.null()
-    tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_lim1 PARAMETER MUST BE A SINGLE INTEGER\nHERE IT IS: \n", paste0(y.lim1, collapse = " "))
-    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+if(all(y.lim1 != "NULL")){
+    tempo <- fun_check(data = y.lim1, class = "vector", typeof = "character", length = 1) ; eval(ee)
 }else{
-    y.lim1 <- as.integer(y.lim1)
+    y.lim1 <- NULL
 }
-if(all(y.lim2 == "NULL")){
-    y.lim2 = NA
-}else if(length(y.lim2) != 1 & any(grepl(y.lim2, pattern = "\\D"))){# normally no NA with is.null()
-    tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_lim2 PARAMETER MUST BE A SINGLE INTEGER\nHERE IT IS: \n", paste0(y.lim2, collapse = " "))
-    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+if(all(y.lim2 != "NULL")){
+    tempo <- fun_check(data = y.lim2, class = "vector", typeof = "character", length = 1) ; eval(ee)
 }else{
-    y.lim2 <- as.integer(y.lim2)
+    y.lim2 <- NULL
 }
 tempo <- fun_check(data = log, class = "vector", typeof = "character", length = 1) ; eval(ee)
 if(any(arg.check) == TRUE){ # normally no NA
@@ -289,8 +283,6 @@ if(any(arg.check) == TRUE){ # normally no NA
 tempo.arg <-c(
     "fisher",
     "chr.path", 
-    "y.lim1", 
-    "y.lim2",
     "log"
 )
 tempo.log <- sapply(lapply(tempo.arg, FUN = get, env = sys.nframe(), inherit = FALSE), FUN = is.null)
@@ -359,7 +351,7 @@ if(erase.graphs == TRUE){
 
 
 if( ! file.exists(fisher)){
-    stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE cute PARAMETER DOES NOT EXISTS: ", fisher, "\n\n============\n\n"), call. = FALSE)
+    stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE fisher PARAMETER DOES NOT EXISTS: ", fisher, "\n\n============\n\n"), call. = FALSE)
 }else{
     obs <- read.table(fisher, sep = "\t", stringsAsFactors = FALSE, header = TRUE, comment.char = "")
     if(length(obs) > 0 & nrow(obs) > 0){
@@ -369,7 +361,7 @@ if( ! file.exists(fisher)){
     }
 }
 if( ! file.exists(chr.path)){
-    stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE cute PARAMETER DOES NOT EXISTS: ", chr.path, "\n\n============\n\n"), call. = FALSE)
+    stop(paste0("\n\n============\n\nERROR IN miami.R\nFILE INDICATED IN THE chr.path PARAMETER DOES NOT EXISTS: ", chr.path, "\n\n============\n\n"), call. = FALSE)
 }else{
     chr <- read.table(chr.path, sep = "\t", stringsAsFactors = FALSE, header = TRUE, comment.char = "")
 }
@@ -472,6 +464,29 @@ if(length(obs) > 0 & nrow(obs) > 0){
     }
 }
 
+if( ! is.null(y.lim1)){
+    print(y.lim1)
+    tempo <- unlist(strsplit(x = y.lim1, split = " "))
+    print(tempo)
+    if(length(tempo) != 2 | ! all(grepl(tempo, pattern = "^[0123456789.\\-\\+eE]*$"))){
+        tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_lim1 PARAMETER MUST BE TWO NUMERIC VALUES SEPARATED BY A SINGLE SPACE\nHERE IT IS: \n", paste0(y.lim1, collapse = " "))
+        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+    }else{
+        y.lim1 <- as.numeric(tempo)
+        print(y.lim1)
+    }
+}
+if( ! is.null(y.lim2)){
+    tempo <- unlist(strsplit(x = y.lim2, split = " "))
+    if(length(tempo) != 2 | ! all(grepl(tempo, pattern = "^[0123456789.\\-\\+eE]*$"))){
+        tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_lim1 PARAMETER MUST BE TWO NUMERIC VALUES SEPARATED BY A SINGLE SPACE\nHERE IT IS: \n", paste0(y.lim2, collapse = " "))
+        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+    }else{
+        y.lim2 <- as.numeric(tempo)
+    }
+}
+
+
 ############ end modifications of imported tables
 
 
@@ -507,7 +522,7 @@ if(empty.obs == TRUE){
     ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_y_continuous(
         expand = c(0, 0), # remove space after after axis limits
-        limits = c(0, y.lim1), # NA indicate that limits must correspond to data limits but ylim() already used
+        limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
         oob = scales::rescale_none, 
         trans = "identity" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
     ))
@@ -553,7 +568,7 @@ if(empty.obs == TRUE){
         ))
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
             expand = c(0, 0), # remove space after after axis limits
-            limits = c(y.lim2, 0), # NA indicate that limits must correspond to data limits but ylim() already used
+            limits = y.lim2, # NA indicate that limits must correspond to data limits but ylim() already used
             oob = scales::rescale_none, 
             trans = "reverse" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
         ))
