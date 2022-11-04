@@ -82,6 +82,8 @@ if(interactive() == FALSE){ # if(grepl(x = commandArgs(trailingOnly = FALSE), pa
         "color.column",
         "y.lim1", 
         "y.lim2", 
+        "y.log1", 
+        "y.log2", 
         "cute", 
         "log"
     ) # objects names exactly in the same order as in the bash code and recovered in args. Here only one, because only the path of the config file to indicate after the miami.R script execution
@@ -108,15 +110,15 @@ rm(tempo.cat)
 
 # fisher <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/fisher.tsv"
 # chr.path <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
-# x.lim <- "chr1:0-50000, chr3:0-150000" # "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM"
-# bottom.y.column <- "NULL"
+# x.lim <- "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" # "chr1:0-50000, chr3:0-150000"   
+# bottom.y.column <- "AF"
 # color.column <- "NULL"
-# y.lim1 <- 5
-# y.lim2 <- 3
+# y.lim1 <- "NULL"
+# y.lim2 <- "NULL"
+# y.log1 <- "FALSE"
+# y.log2 <- "FALSE"
 # cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
 # log <- "miami_report.txt"
-
-
 
 
 ################################ end Test
@@ -138,6 +140,8 @@ param.list <- c(
     "color.column",
     "y.lim1", 
     "y.lim2",
+    "y.log1", 
+    "y.log2", 
     "cute", 
     "log"
 )
@@ -219,6 +223,8 @@ if( ! is.null(tempo)){
 req.package.list <- c(
     "lubridate", 
     "ggplot2", 
+    "scales", 
+    "grid", 
     "qqman"
 )
 for(i in 1:length(req.package.list)){suppressMessages(library(req.package.list[i], character.only = TRUE))}
@@ -271,6 +277,7 @@ if(all(y.lim2 != "NULL")){
 }else{
     y.lim2 <- NULL
 }
+tempo <- fun_check(data = y.log1, class = "vector", typeof = "character", length = 1) ; eval(ee)
 tempo <- fun_check(data = log, class = "vector", typeof = "character", length = 1) ; eval(ee)
 if(any(arg.check) == TRUE){ # normally no NA
     stop(paste0("\n\n================\n\n", paste(text.check[arg.check], collapse = "\n"), "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between == #
@@ -283,6 +290,8 @@ if(any(arg.check) == TRUE){ # normally no NA
 tempo.arg <-c(
     "fisher",
     "chr.path", 
+    "y.log1", 
+    "y.log2", 
     "log"
 )
 tempo.log <- sapply(lapply(tempo.arg, FUN = get, env = sys.nframe(), inherit = FALSE), FUN = is.null)
@@ -291,6 +300,26 @@ if(any(tempo.log) == TRUE){# normally no NA with is.null()
     stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
 }
 # end management of NULL arguments
+# management of ""
+tempo.arg <-c(
+    "fisher", 
+    "chr.path", 
+    "x.lim", 
+    "bottom.y.column",
+    "color.column",
+    "y.lim1", 
+    "y.lim2",
+    "y.log1", 
+    "y.log2", 
+    "cute", 
+    "log"
+)
+tempo.log <- sapply(lapply(tempo.arg, FUN = get, env = sys.nframe(), inherit = FALSE), FUN = function(x){any(x == "")})
+if(any(tempo.log) == TRUE){# normally no NA with is.null()
+    tempo.cat <- paste0("ERROR IN miami.R:\n", ifelse(sum(tempo.log, na.rm = TRUE) > 1, "THESE ARGUMENTS\n", "THIS ARGUMENT\n"), paste0(tempo.arg[tempo.log], collapse = "\n"),"\nCANNOT BE \"\"")
+    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+}
+# end management of ""
 # code that protects set.seed() in the global environment
 # end code that protects set.seed() in the global environment
 # warning initiation
@@ -300,6 +329,22 @@ warn <- NULL
 # warn.count <- 0 # not required
 # end warning initiation
 # other checkings
+if(y.log1 == "TRUE"){
+    y.log1 <- TRUE
+}else if(y.log1 == "FALSE"){
+    y.log1 <- FALSE
+}else{
+    tempo.cat <- paste0("ERROR IN miami.R\ny.log1 PARAMETER CAN ONLY BE \"TRUE\" OR \"FALSE\": ", y.log1)
+    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+}
+if(y.log2 == "TRUE"){
+    y.log2 <- TRUE
+}else if(y.log2 == "FALSE"){
+    y.log2 <- FALSE
+}else{
+    tempo.cat <- paste0("ERROR IN miami.R\ny.log2 PARAMETER CAN ONLY BE \"TRUE\" OR \"FALSE\": ", y.log2)
+    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+}
 # end other checkings
 # reserved word checking
 # end reserved word checking
@@ -317,7 +362,7 @@ warn <- NULL
 ################ Ignition
 
 
-fun_report(data = paste0("\n\n################################################################ miami PROCESS\n\n"), output = log, path = "./", overwrite = FALSE)
+fun_report(data = paste0("\n\n################################################################ miami PROCESS\n\n"), output = log, path = "./", overwrite = TRUE)
 ini.date <- Sys.time()
 ini.time <- as.numeric(ini.date) # time of process begin, converted into seconds
 fun_report(data = paste0("\n\n################################ RUNNING DATE AND STARTING TIME\n\n"), output = log, path = "./", overwrite = FALSE)
@@ -511,21 +556,47 @@ if(empty.obs == TRUE){
         assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_colour_gradient2())
     }
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::ggtitle(
-        paste0("x.lim: ", ifelse(x.lim == whole, "whole genome", x.lim))
+        paste0("x.lim: ", ifelse(x.lim == whole, "whole genome", x.lim), ifelse(y.log1, ", top y-axis: log10", ""), ifelse(y.log2, ", bottom y-axis: log10", ""))
     ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_x_continuous(
+        name = "CHR", 
         expand = c(0, 0), # remove space after after axis limits
         oob = scales::rescale_none,
         label = chr$CHR_NAME, 
         breaks= chr$CHR_NAME_POS, 
         limits = c(xmin_plot - marging, max(chr$LENGTH_CUMUL) + marging)
     ))
-    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_y_continuous(
-        expand = c(0, 0), # remove space after after axis limits
-        limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
-        oob = scales::rescale_none, 
-        trans = "identity" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
-    ))
+    if(y.log1){
+        if(any(obs$NEG_LOG10_P_VALUE <= 0)){
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_log1 PARAMETER CANNOT BE SET TO \"TRUE\" IF 0 OR NEG VALUES IN THE NEG_LOG10_P_VALUE FIELD OF THE TSV OR VCF")
+            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+        }else{
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_y_continuous(
+                expand = c(0, 0), # remove space after after axis limits
+                limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
+                oob = scales::rescale_none, 
+                trans = "log10",  # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+                breaks = scales::trans_breaks("log10", function(x){10^x}), 
+                labels = scales::trans_format("log10", scales::math_format(10^.x))
+            ))
+            # assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), annotation_logticks(outside = TRUE))
+        }
+    }else{
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_y_continuous(
+            expand = c(0, 0), # remove space after after axis limits
+            limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
+            oob = scales::rescale_none, 
+            trans = "identity" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+        ))
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), annotate(
+            geom = "segment", 
+            x = c(xmin_plot, chr$LENGTH_CUMUL), 
+            xend = c(xmin_plot, chr$LENGTH_CUMUL), 
+            y = 0, 
+            yend = -0.05, 
+            size = 1.5
+        ))
+    }
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme_bw())
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme(
         plot.title = ggplot2::element_text(size = 8), 
@@ -535,15 +606,7 @@ if(empty.obs == TRUE){
         panel.grid.minor.x = element_blank(),
         axis.ticks.x = element_blank()
     ))
-    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), annotate(
-        geom = "segment", 
-        x = c(xmin_plot, chr$LENGTH_CUMUL), 
-        xend = c(xmin_plot, chr$LENGTH_CUMUL), 
-        y = 0, 
-        yend = -0.05, 
-        size = 1
-    ))
-    
+
     fin.plot1 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name, 1:tempo.gg.count), collapse = " + ")))))
     
     if(is.null(bottom.y.column)){
@@ -566,12 +629,29 @@ if(empty.obs == TRUE){
             breaks= chr$CHR_NAME_POS, 
             limits = c(xmin_plot - marging, max(chr$LENGTH_CUMUL) + marging)
         ))
-        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
-            expand = c(0, 0), # remove space after after axis limits
-            limits = y.lim2, # NA indicate that limits must correspond to data limits but ylim() already used
-            oob = scales::rescale_none, 
-            trans = "reverse" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
-        ))
+        if(y.log2){
+            if(any(obs[ , bottom.y.column] <= 0)){
+                tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_log2 PARAMETER CANNOT BE SET TO \"TRUE\" IF 0 OR NEG VALUES IN THE ", bottom.y.column, " FIELD OF THE TSV OR VCF")
+                stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+            }else{
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
+                    expand = c(0, 0), # remove space after after axis limits
+                    limits = y.lim2, # NA indicate that limits must correspond to data limits but ylim() already used
+                    oob = scales::rescale_none, 
+                    trans = "log10",  # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+                    breaks = scales::trans_breaks("log10", function(x){10^x}), 
+                    labels = scales::trans_format("log10", scales::math_format(10^.x))
+                ))
+                # assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), annotation_logticks(outside = TRUE)) # 
+            }
+        }else{
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
+                expand = c(0, 0), # remove space after after axis limits
+                limits = y.lim2, # NA indicate that limits must correspond to data limits but ylim() already used
+                oob = scales::rescale_none, 
+                trans = "reverse" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+            ))
+        }
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme_bw())
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme(
             legend.position=if(is.null(color.column)){"none"},
@@ -582,9 +662,12 @@ if(empty.obs == TRUE){
             axis.text.x=element_blank(),
             axis.ticks.x=element_blank()
         ))
+
         fin.plot2 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name2, 1:tempo.gg.count2), collapse = " + ")))))
-        
-        suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, fin.plot2, ncol=1, nrow = 2)))
+        gl <- lapply(list(fin.plot1, fin.plot2), ggplotGrob)  
+        wd <- do.call(unit.pmax, lapply(gl, "[[", 'widths'))
+        gl <- lapply(gl, function(x){x[['widths']] = wd ; x})
+        suppressMessages(suppressWarnings(gridExtra::grid.arrange(gl[[1]], gl[[2]], ncol=1, nrow = 2)))
     }
 }else{
     fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE x_lim PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE\nOR THE RANGE OF THE region PARAMETER\nOR NULL"))

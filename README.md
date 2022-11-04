@@ -120,7 +120,7 @@ See chmod in protocol 44.
 Like above but then run the following command from here \\wsl$\Ubuntu-20.04\home\gael:
 
 ```bash
-nextflow run fisher_for_vcf.nf -c fisher_for_vcf.config
+nextflow run -c fisher_for_vcf.config fisher_for_vcf.nf
 ```
 
 with -c to specify the name of the config file used.
@@ -164,7 +164,7 @@ Then run:
 HOME="${ZEUSHOME}/fisher_for_vcf/" ; trap '' SIGINT ; nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r v1.0 -c $HOME/fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"  ; trap SIGINT
 
 # local fisher_for_vcf.nf file ($HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/. See NFX_HOME in the nextflow soft script)
-HOME="${ZEUSHOME}/fisher_for_vcf/" ; trap '' SIGINT ; nextflow run --modules ${MODULES} fisher_for_vcf.nf -c fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/" ; trap SIGINT
+HOME="${ZEUSHOME}/fisher_for_vcf/" ; trap '' SIGINT ; nextflow run --modules ${MODULES} -c fisher_for_vcf.config fisher_for_vcf.nf ; HOME="/pasteur/appa/homes/gmillot/" ; trap SIGINT
 ```
 
 If an error message appears, like:
@@ -185,17 +185,19 @@ Copy-paste this into a linux console
 PWD=$(pwd)
 # see the fisher_for_vcf.config file for info about the parameters
 echo -e '
-fisher="dataset/res_fisher.tsv.gz"
-chr="dataset/hg19_grch37p5_chr_size_cumul.txt"
+fisher="${PWD}/dataset/res_fisher.tsv.gz"
+chr="${PWD}/dataset/hg19_grch37p5_chr_size_cumul.txt"
 x_lim="chr1"
 bottom_y_column="AF"
 color_column="NULL"
 y_lim1="NULL"
 y_lim2="NULL"
+y_log1="FALSE"
+y_log2="TRUE"
 cute="https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R"
 
-Rscript bin/miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute}" "miami_report.txt"
-' | sudo docker run --workdir /tempo/ -i --mount "type=bind,src=${PWD},dst=/tempo/" --entrypoint bash gmillot/r_v4.1.2_extended_v2.1:gitlab_v8.8
+Rscript ${PWD}/bin/miami.R ${fisher} ${chr} "${x_lim}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${y_log1}" "${y_log2}" "${cute}" "miami_report.txt"
+' | sudo docker run --workdir /tmp/ -i --mount "type=bind,src=${PWD},dst=/tmp/" --entrypoint bash gmillot/r_v4.1.2_extended_v2.1:gitlab_v8.8
 ```
 
 The outputs files are in $PWD, i.e., where the code has been executed.
@@ -282,6 +284,11 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+
+### v2.3
+
+miamiplot: log10 scale and alignment of graphics
 
 
 ### v2.2

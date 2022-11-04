@@ -124,6 +124,12 @@ if( ! y_lim1 in String ){
 if( ! y_lim2 in String ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
 }
+if( ! y_log1 in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_log1 PARAMETER IN nextflow.config FILE:\n${y_log1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! y_log2 in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_log2 PARAMETER IN nextflow.config FILE:\n${y_log2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
 def file_exists5 = cute.exists()
 if( ! file_exists5){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cute_path PARAMETER IN nextflow.config FILE:\n${cute_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
@@ -249,6 +255,8 @@ process miami_plot {
     val color_column
     val y_lim1
     val y_lim2
+    val y_log1
+    val y_log2
     file cute
 
     output:
@@ -258,7 +266,7 @@ process miami_plot {
     script:
     """
     #!/bin/bash -ue
-    miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${cute}" "miami_report.txt"
+    miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${y_log1}" "${y_log2}" "${cute}" "miami_report.txt"
     """
 }
 
