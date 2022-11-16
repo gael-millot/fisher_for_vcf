@@ -78,10 +78,14 @@ if(interactive() == FALSE){ # if(grepl(x = commandArgs(trailingOnly = FALSE), pa
         "fisher", 
         "chr.path", 
         "x.lim", 
+        "vgrid", 
+        "top.y.column",
         "bottom.y.column",
         "color.column",
         "y.lim1", 
-        "y.lim2", 
+        "y.lim2",
+        "y.threshold1", 
+        "y.threshold2", 
         "y.log1", 
         "y.log2", 
         "cute", 
@@ -110,15 +114,34 @@ rm(tempo.cat)
 
 # fisher <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/fisher.tsv"
 # chr.path <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
-# x.lim <- "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" # "chr1:0-50000, chr3:0-150000"   
+# x.lim <- "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" ### "chr1:0-50000, chr3:0-150000"
+# vgrid <- "TRUE"
+# top.y.column <- "NEG_LOG10_P_VALUE"
 # bottom.y.column <- "AF"
 # color.column <- "NULL"
 # y.lim1 <- "NULL"
 # y.lim2 <- "NULL"
+# y.threshold1 <- "1.2"
+# y.threshold2 <- "0.5"
 # y.log1 <- "FALSE"
 # y.log2 <- "FALSE"
 # cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
 # log <- "miami_report.txt"
+fisher <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/fisher.tsv"
+chr.path <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
+x.lim <- "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" ##"chr1:0-50000, chr3:0-150000"
+vgrid <- "FALSE"
+top.y.column <- "NEG_LOG10_P_VALUE"
+bottom.y.column <- "AF"
+color.column <- "NULL"
+y.lim1 <- "NULL"
+y.lim2 <- "NULL"
+y.threshold1 <- "1.2"
+y.threshold2 <- "0.5"
+y.log1 <- "FALSE"
+y.log2 <- "FALSE"
+cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
+log <- "miami_report.txt"
 
 
 ################################ end Test
@@ -136,10 +159,14 @@ param.list <- c(
     "fisher", 
     "chr.path", 
     "x.lim", 
+    "vgrid", 
+    "top.y.column", 
     "bottom.y.column",
     "color.column",
     "y.lim1", 
-    "y.lim2",
+    "y.lim2", 
+    "y.threshold1", 
+    "y.threshold2",
     "y.log1", 
     "y.log2", 
     "cute", 
@@ -257,6 +284,12 @@ if(all(x.lim != "NULL")){
 }else{
     x.lim <- NULL
 }
+tempo <- fun_check(data = vgrid, class = "vector", typeof = "character", length = 1) ; eval(ee)
+if(all(top.y.column != "NULL")){
+    tempo <- fun_check(data = top.y.column, class = "vector", typeof = "character", length = 1) ; eval(ee)
+}else{
+    top.y.column <- NULL
+}
 if(all(bottom.y.column != "NULL")){
     tempo <- fun_check(data = bottom.y.column, class = "vector", typeof = "character", length = 1) ; eval(ee)
 }else{
@@ -277,6 +310,16 @@ if(all(y.lim2 != "NULL")){
 }else{
     y.lim2 <- NULL
 }
+if(all(y.threshold1 != "NULL")){
+    tempo <- fun_check(data = y.threshold1, class = "vector", typeof = "character", length = 1) ; eval(ee)
+}else{
+    y.threshold1 <- NULL
+}
+if(all(y.threshold2 != "NULL")){
+    tempo <- fun_check(data = y.threshold2, class = "vector", typeof = "character", length = 1) ; eval(ee)
+}else{
+    y.threshold2 <- NULL
+}
 tempo <- fun_check(data = y.log1, class = "vector", typeof = "character", length = 1) ; eval(ee)
 tempo <- fun_check(data = log, class = "vector", typeof = "character", length = 1) ; eval(ee)
 if(any(arg.check) == TRUE){ # normally no NA
@@ -290,6 +333,7 @@ if(any(arg.check) == TRUE){ # normally no NA
 tempo.arg <-c(
     "fisher",
     "chr.path", 
+    "vgrid", 
     "y.log1", 
     "y.log2", 
     "log"
@@ -305,10 +349,14 @@ tempo.arg <-c(
     "fisher", 
     "chr.path", 
     "x.lim", 
+    "vgrid", 
+    "top.y.column",
     "bottom.y.column",
     "color.column",
     "y.lim1", 
-    "y.lim2",
+    "y.lim2", 
+    "y.threshold1", 
+    "y.threshold2", 
     "y.log1", 
     "y.log2", 
     "cute", 
@@ -329,21 +377,15 @@ warn <- NULL
 # warn.count <- 0 # not required
 # end warning initiation
 # other checkings
-if(y.log1 == "TRUE"){
-    y.log1 <- TRUE
-}else if(y.log1 == "FALSE"){
-    y.log1 <- FALSE
-}else{
-    tempo.cat <- paste0("ERROR IN miami.R\ny.log1 PARAMETER CAN ONLY BE \"TRUE\" OR \"FALSE\": ", y.log1)
-    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-}
-if(y.log2 == "TRUE"){
-    y.log2 <- TRUE
-}else if(y.log2 == "FALSE"){
-    y.log2 <- FALSE
-}else{
-    tempo.cat <- paste0("ERROR IN miami.R\ny.log2 PARAMETER CAN ONLY BE \"TRUE\" OR \"FALSE\": ", y.log2)
-    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+for(i0 in c("vgrid", "y.log1", "y.log2")){
+    if(get(i0) == "TRUE"){
+        assign(i0, TRUE)
+    }else if(get(i0) == "FALSE"){
+        assign(i0, FALSE)
+    }else{
+        tempo.cat <- paste0("ERROR IN miami.R\n", i0, " PARAMETER CAN ONLY BE \"TRUE\" OR \"FALSE\": ", get(i0))
+        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+    }
 }
 # end other checkings
 # reserved word checking
@@ -447,6 +489,10 @@ if(length(obs) > 0 & nrow(obs) > 0){
     # preparation of the x coordinates: three solutions: 1) whole object (see above), 2) single chromo "chr7" or "chr7:0-15", 3) several chromo chr7, chr8" or "chr7:0-15, chr8" or "chr7:0-15, chr8:0-20"
     # The idea is to select rows of chr and potentially restrict some chr limits
     if( ! is.null(x.lim)){
+        is.whole <- FALSE
+        if(x.lim == whole){ #at that stage, x.lim is a single character
+            is.whole <- TRUE
+        }
         tempo <- strsplit(x = x.lim, split = ",")[[1]]
         tempo <- gsub(x = tempo, pattern = " ", replacement = "")
         if( ! all(grepl(x = tempo, pattern = "^chr.+"))){
@@ -509,28 +555,28 @@ if(length(obs) > 0 & nrow(obs) > 0){
     }
 }
 
-if( ! is.null(y.lim1)){
-    print(y.lim1)
-    tempo <- unlist(strsplit(x = y.lim1, split = " "))
-    print(tempo)
-    if(length(tempo) != 2 | ! all(grepl(tempo, pattern = "^[0123456789.\\-\\+eE]*$"))){
-        tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_lim1 PARAMETER MUST BE TWO NUMERIC VALUES SEPARATED BY A SINGLE SPACE\nHERE IT IS: \n", paste0(y.lim1, collapse = " "))
-        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-    }else{
-        y.lim1 <- as.numeric(tempo)
-        print(y.lim1)
+for(i0 in c("y.lim1", "y.lim2")){
+    if( ! is.null(get(i0))){
+        tempo <- unlist(strsplit(x = get(i0), split = " "))
+        if(length(tempo) != 2 | ! all(grepl(tempo, pattern = "^[0123456789.\\-\\+eE]*$"))){
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE ", i0, " PARAMETER MUST BE TWO NUMERIC VALUES SEPARATED BY A SINGLE SPACE\nHERE IT IS: \n", paste0(get(i0), collapse = " "))
+            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+        }else{
+            assign(i0, as.numeric(tempo))
+        }
     }
 }
-if( ! is.null(y.lim2)){
-    tempo <- unlist(strsplit(x = y.lim2, split = " "))
-    if(length(tempo) != 2 | ! all(grepl(tempo, pattern = "^[0123456789.\\-\\+eE]*$"))){
-        tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_lim1 PARAMETER MUST BE TWO NUMERIC VALUES SEPARATED BY A SINGLE SPACE\nHERE IT IS: \n", paste0(y.lim2, collapse = " "))
-        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
-    }else{
-        y.lim2 <- as.numeric(tempo)
+for(i0 in c("y.threshold1", "y.threshold2")){
+    if( ! is.null(get(i0))){
+        tempo <- unlist(strsplit(x = get(i0), split = " "))
+        if(length(tempo) != 1 | ! all(grepl(tempo, pattern = "^[0123456789.\\-\\+eE]*$"))){
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE ", i0, " PARAMETER MUST BE TWO NUMERIC VALUES SEPARATED BY A SINGLE SPACE\nHERE IT IS: \n", paste0(get(i0), collapse = " "))
+            stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+        }else{
+            assign(i0, as.numeric(tempo))
+        }
     }
 }
-
 
 ############ end modifications of imported tables
 
@@ -539,24 +585,56 @@ if( ! is.null(y.lim2)){
 
 
 #fun_open(width = 12, height = 4, pdf.name = paste0("plot_read_length_", kind)) # must be systematically opened for main.nf
-png(filename = paste0("miami.png"), width = 3600, height = 1800, units = "px", res = 300)
+png.size <- 1800 # px
+tick.size <- 1/50 # 1/50 means 1/50 of the heigth of the plot
+png(filename = paste0("miami.png"), width = png.size * 2, height = png.size, units = "px", res = 300)
 
 if(empty.obs == TRUE){
     fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE region PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE"))
 }else if(length(obs) > 0 & nrow(obs) > 0 & ! is.null(x.lim)){
-    marging <- (chr$LENGTH_CUMUL[nrow(chr)] - xmin_plot) * 0.02
+    marging <- 0 # (chr$LENGTH_CUMUL[nrow(chr)] - xmin_plot) * 0.02
     tempo.gg.name <- "gg.indiv.plot."
     tempo.gg.count <- 0
-    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot(obs, aes_string(x = "coord", y = "NEG_LOG10_P_VALUE")))
-    if(is.null(color.column)){
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes(color = as.factor(CHROM)), alpha=0.5, size=1))
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot(obs, aes_string(x = "coord", y = top.y.column)))
+    if(vgrid){
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_vline(
+            xintercept = c(xmin_plot, chr$LENGTH_CUMUL),
+            size = 0.25,
+            color = "grey80"
+        ))
     }else{
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes_string(color = color.column), alpha=0.5, size=1))
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_colour_gradient2())
+        y.min.pos <- ifelse(is.null(y.lim1), min(obs[ , top.y.column]), min(y.lim1))
+        y.max.pos <- ifelse(is.null(y.lim1), max(obs[ , top.y.column]), max(y.lim1))
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), annotate(
+            geom = "segment", 
+            x = c(xmin_plot, chr$LENGTH_CUMUL), 
+            xend = c(xmin_plot, chr$LENGTH_CUMUL), 
+            y = y.min.pos, 
+            yend = - abs(y.max.pos - y.min.pos) * tick.size , # conversion to px according to png() above, should have 1/50 of the png height as tick length
+            size = 0.25,
+            color = "black"
+        ))
+    }
+    if( ! is.null(y.threshold1)){
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_hline(
+            yintercept = y.threshold1,
+            linetype = "22", 
+            size = 0.25, 
+            color = "red"
+        ))
+    }
+    if(is.null(color.column)){
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes(fill = as.factor(CHROM)), alpha = 0.8, color = "white", pch = 21, size = 1))
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_fill_manual(values = rep(c("grey20", "skyblue"), 25)))
+    }else{
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes_string(fill = color.column), alpha = 0.8, color = "white", pch = 21, size = 1))
+        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_fill_gradient2())
     }
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::ggtitle(
-        paste0("x.lim: ", ifelse(x.lim == whole, "whole genome", x.lim), ifelse(y.log1, ", top y-axis: log10", ""), ifelse(y.log2, ", bottom y-axis: log10", ""))
+        paste0("x.lim: ", ifelse(is.whole, "whole genome", x.lim), 
+        ifelse( ! is.null(y.threshold1), paste0(", top threshold: ", y.threshold1), ""), 
+        ifelse( ! (is.null(y.threshold2) & is.null(bottom.y.column)), paste0(", bottom threshold: ", y.threshold2), ""), 
+        ifelse(y.log1, ", top y-axis: log10", ""), ifelse(y.log2, ", bottom y-axis: log10", ""))
     ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_x_continuous(
         name = "CHR", 
@@ -567,15 +645,15 @@ if(empty.obs == TRUE){
         limits = c(xmin_plot - marging, max(chr$LENGTH_CUMUL) + marging)
     ))
     if(y.log1){
-        if(any(obs$NEG_LOG10_P_VALUE <= 0)){
-            tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_log1 PARAMETER CANNOT BE SET TO \"TRUE\" IF 0 OR NEG VALUES IN THE NEG_LOG10_P_VALUE FIELD OF THE TSV OR VCF")
+        if(any(obs[ , top.y.column] <= 0)){
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE y_log1 PARAMETER CANNOT BE SET TO \"TRUE\" IF 0 OR NEG VALUES IN THE ", top.y.column, " FIELD OF THE TSV OR VCF")
             stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
         }else{
             assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_y_continuous(
                 expand = c(0, 0), # remove space after after axis limits
                 limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
                 oob = scales::rescale_none, 
-                trans = "log10",  # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+                trans = "log10", 
                 breaks = scales::trans_breaks("log10", function(x){10^x}), 
                 labels = scales::trans_format("log10", scales::math_format(10^.x))
             ))
@@ -586,41 +664,72 @@ if(empty.obs == TRUE){
             expand = c(0, 0), # remove space after after axis limits
             limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
             oob = scales::rescale_none, 
-            trans = "identity" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
-        ))
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), annotate(
-            geom = "segment", 
-            x = c(xmin_plot, chr$LENGTH_CUMUL), 
-            xend = c(xmin_plot, chr$LENGTH_CUMUL), 
-            y = 0, 
-            yend = -0.05, 
-            size = 1.5
+            trans = "identity"
         ))
     }
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme_bw())
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), theme(
         plot.title = ggplot2::element_text(size = 8), 
-        legend.position=if(is.null(color.column)){"none"},
-        panel.border = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        axis.ticks.x = element_blank()
+        legend.position=if(is.null(color.column)){"none"}, 
+        panel.border = element_blank(), 
+        panel.grid = element_blank(), 
+        axis.ticks.x = element_blank(), 
+        axis.ticks.y.left = element_line(size = 0.25), 
+        # axis.line.x.bottom = element_line(size = 0.25), # ugly, thus i added geom_hline below
+        axis.line.y.left = element_line(size = 0.25) 
+    ))
+    assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_hline(
+        yintercept = ifelse(is.null(y.lim1), min(obs[ , top.y.column]), min(y.lim1)), 
+        size = 0.25
     ))
 
     fin.plot1 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name, 1:tempo.gg.count), collapse = " + ")))))
-    
+    # tempo.output <- ggplot2::ggplot_build(fin.plot1)
+
+    y.min.pos2 <- ifelse(is.null(y.lim2), min(obs[ , bottom.y.column]), min(y.lim2))
+    y.max.pos2 <- ifelse(is.null(y.lim2), max(obs[ , bottom.y.column]), max(y.lim2))
+    top.plot.dist <- abs(y.max.pos - y.min.pos)
+    bottom.plot.dist <- abs(y.max.pos2 - y.min.pos2)
+    ratio <- top.plot.dist / bottom.plot.dist 
+
     if(is.null(bottom.y.column)){
         suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, ncol=1, nrow = 1)))
     }else{
         tempo.gg.name2 <- "gg.indiv.plot."
         tempo.gg.count2 <- 0
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), ggplot(obs, aes_string(x = "coord", y = bottom.y.column)))
-        if(is.null(color.column)){
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes(color = as.factor(CHROM)), alpha=0.5, size=1))
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey", "skyblue"), 25)))
+        if(vgrid){
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_vline(
+                xintercept = c(xmin_plot, chr$LENGTH_CUMUL),
+                size = 0.25,
+                color = "grey80"
+            ))
         }else{
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes_string(color = color.column), alpha=0.5, size=1))
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_colour_gradient2())
+
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), annotate(
+                geom = "segment", 
+                x = c(xmin_plot, chr$LENGTH_CUMUL), 
+                xend = c(xmin_plot, chr$LENGTH_CUMUL), 
+                y = y.min.pos2, 
+                yend = - abs(y.max.pos2 - y.min.pos2) * tick.size * ratio, # (tempo.output$data[[1]][ , "yend"]) / (y.max.pos - y.min.pos) * (png.size - 0)) -> conversion to px according to png() above, then 
+                size = 0.25,
+                color = "black"
+            ))
+        }
+        if( ! is.null(y.threshold2)){
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_hline(
+                yintercept = y.threshold2,
+                linetype = "22", 
+                size = 0.25, 
+                color = "red"
+            ))
+        }
+        if(is.null(color.column)){
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes(fill = as.factor(CHROM)), alpha = 0.8, color = "white", pch = 21, size = 1))
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_fill_manual(values = rep(c("grey20", "skyblue"), 25)))
+        }else{
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes_string(fill = color.column), alpha = 0.8, color = "white", pch = 21, size = 1))
+            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_fill_gradient2())
         }
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_x_continuous(
             expand = c(0, 0), # remove space after after axis limits
@@ -638,7 +747,7 @@ if(empty.obs == TRUE){
                     expand = c(0, 0), # remove space after after axis limits
                     limits = y.lim2, # NA indicate that limits must correspond to data limits but ylim() already used
                     oob = scales::rescale_none, 
-                    trans = "log10",  # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+                    trans = "log10", 
                     breaks = scales::trans_breaks("log10", function(x){10^x}), 
                     labels = scales::trans_format("log10", scales::math_format(10^.x))
                 ))
@@ -656,11 +765,17 @@ if(empty.obs == TRUE){
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme(
             legend.position=if(is.null(color.column)){"none"},
             panel.border = element_blank(),
-            panel.grid.major.x = element_blank(),
-            panel.grid.minor.x = element_blank(),
-            axis.title.x=element_blank(),
-            axis.text.x=element_blank(),
-            axis.ticks.x=element_blank()
+            panel.grid = element_blank(), 
+            axis.ticks.y.left = element_line(size = 0.25), 
+            # axis.line.x.top = element_line(size = 0.25), # is not displayed. Thus, I add a geom_hline below
+            axis.line.y.left = element_line(size = 0.25),
+            axis.title.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(), 
+        ))
+        assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_hline(
+            yintercept = ifelse(is.null(y.lim2), min(obs[ , bottom.y.column]), min(y.lim2)),
+            size = 0.25
         ))
 
         fin.plot2 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name2, 1:tempo.gg.count2), collapse = " + ")))))
@@ -736,7 +851,7 @@ tempo <- sessionInfo()
 tempo$otherPkgs <- tempo$otherPkgs[order(names(tempo$otherPkgs))] # sort the packages
 tempo$loadedOnly <- tempo$loadedOnly[order(names(tempo$loadedOnly))] # sort the packages
 fun_report(data = tempo, output = log, path = "./", overwrite = FALSE, , vector.cat = TRUE)
-fun_report(data = paste0("\n\n################################ JOB END\n\nTIME: ", end.date, "\n\nTOTAL TIME LAPSE: ", total.lapse, "\n"), output = log, path = "./", overwrite = FALSE)
+
 
 
 ################ end Parameter printing

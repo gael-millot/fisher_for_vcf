@@ -112,6 +112,12 @@ if( ! tsv_extra_fields in String ){
 if( ! x_lim in String ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID x_lim PARAMETER IN nextflow.config FILE:\n${x_lim}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
 }
+if( ! vgrid in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID vgrid PARAMETER IN nextflow.config FILE:\n${vgrid}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! top_y_column in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID top_y_column PARAMETER IN nextflow.config FILE:\n${top_y_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
 if( ! bottom_y_column in String ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID bottom_y_column PARAMETER IN nextflow.config FILE:\n${bottom_y_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
 }
@@ -123,6 +129,12 @@ if( ! y_lim1 in String ){
 }
 if( ! y_lim2 in String ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! y_threshold1 in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_threshold1 PARAMETER IN nextflow.config FILE:\n${y_threshold1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}
+if( ! y_threshold2 in String ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_threshold2 PARAMETER IN nextflow.config FILE:\n${y_threshold2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
 }
 if( ! y_log1 in String ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_log1 PARAMETER IN nextflow.config FILE:\n${y_log1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
@@ -251,10 +263,14 @@ process miami_plot {
     file fisher from fisher_ch3
     file chr
     val x_lim_val
+    val vgrid
+    val top_y_column
     val bottom_y_column
     val color_column
     val y_lim1
     val y_lim2
+    val y_threshold1
+    val y_threshold2
     val y_log1
     val y_log2
     file cute
@@ -266,7 +282,7 @@ process miami_plot {
     script:
     """
     #!/bin/bash -ue
-    miami.R ${fisher} ${chr} "${x_lim_val}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${y_log1}" "${y_log2}" "${cute}" "miami_report.txt"
+    miami.R ${fisher} ${chr} "${x_lim_val}" "${vgrid}" "${top_y_column}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${y_threshold1}" "${y_threshold2}" "${y_log1}" "${y_log2}" "${cute}" "miami_report.txt"
     """
 }
 
