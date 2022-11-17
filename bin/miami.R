@@ -82,8 +82,11 @@ if(interactive() == FALSE){ # if(grepl(x = commandArgs(trailingOnly = FALSE), pa
         "top.y.column",
         "bottom.y.column",
         "color.column",
+        "dot.border.color", 
         "y.lim1", 
         "y.lim2",
+        "reverse1", 
+        "reverse2", 
         "y.threshold1", 
         "y.threshold2", 
         "y.log1", 
@@ -119,29 +122,17 @@ rm(tempo.cat)
 # top.y.column <- "NEG_LOG10_P_VALUE"
 # bottom.y.column <- "AF"
 # color.column <- "NULL"
+# dot.border.color <- "white"
 # y.lim1 <- "NULL"
 # y.lim2 <- "NULL"
+# reverse1 <- "FALSE"
+# reverse2 <- "TRUE"
 # y.threshold1 <- "1.2"
 # y.threshold2 <- "0.5"
 # y.log1 <- "FALSE"
 # y.log2 <- "FALSE"
 # cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
 # log <- "miami_report.txt"
-fisher <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/fisher.tsv"
-chr.path <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
-x.lim <- "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" ##"chr1:0-50000, chr3:0-150000"
-vgrid <- "FALSE"
-top.y.column <- "NEG_LOG10_P_VALUE"
-bottom.y.column <- "AF"
-color.column <- "NULL"
-y.lim1 <- "NULL"
-y.lim2 <- "NULL"
-y.threshold1 <- "1.2"
-y.threshold2 <- "0.5"
-y.log1 <- "FALSE"
-y.log2 <- "FALSE"
-cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
-log <- "miami_report.txt"
 
 
 ################################ end Test
@@ -163,8 +154,11 @@ param.list <- c(
     "top.y.column", 
     "bottom.y.column",
     "color.column",
+    "dot.border.color", 
     "y.lim1", 
     "y.lim2", 
+    "reverse1", 
+    "reverse2", 
     "y.threshold1", 
     "y.threshold2",
     "y.log1", 
@@ -300,6 +294,11 @@ if(all(color.column != "NULL")){
 }else{
     color.column <- NULL
 }
+if(all(dot.border.color != "NULL")){
+    tempo <- fun_check(data = dot.border.color, class = "vector", typeof = "character", length = 1) ; eval(ee)
+}else{
+    dot.border.color <- NULL
+}
 if(all(y.lim1 != "NULL")){
     tempo <- fun_check(data = y.lim1, class = "vector", typeof = "character", length = 1) ; eval(ee)
 }else{
@@ -310,6 +309,8 @@ if(all(y.lim2 != "NULL")){
 }else{
     y.lim2 <- NULL
 }
+tempo <- fun_check(data = reverse1, class = "vector", typeof = "character", length = 1) ; eval(ee)
+tempo <- fun_check(data = reverse2, class = "vector", typeof = "character", length = 1) ; eval(ee)
 if(all(y.threshold1 != "NULL")){
     tempo <- fun_check(data = y.threshold1, class = "vector", typeof = "character", length = 1) ; eval(ee)
 }else{
@@ -334,6 +335,8 @@ tempo.arg <-c(
     "fisher",
     "chr.path", 
     "vgrid", 
+    "reverse1", 
+    "reverse2", 
     "y.log1", 
     "y.log2", 
     "log"
@@ -351,10 +354,13 @@ tempo.arg <-c(
     "x.lim", 
     "vgrid", 
     "top.y.column",
-    "bottom.y.column",
-    "color.column",
+    "bottom.y.column", 
+    "color.column", 
+    "dot.border.color", 
     "y.lim1", 
     "y.lim2", 
+    "reverse1", 
+    "reverse2",
     "y.threshold1", 
     "y.threshold2", 
     "y.log1", 
@@ -377,7 +383,7 @@ warn <- NULL
 # warn.count <- 0 # not required
 # end warning initiation
 # other checkings
-for(i0 in c("vgrid", "y.log1", "y.log2")){
+for(i0 in c("vgrid", "reverse1", "reverse2", "y.log1", "y.log2")){
     if(get(i0) == "TRUE"){
         assign(i0, TRUE)
     }else if(get(i0) == "FALSE"){
@@ -586,13 +592,14 @@ for(i0 in c("y.threshold1", "y.threshold2")){
 
 #fun_open(width = 12, height = 4, pdf.name = paste0("plot_read_length_", kind)) # must be systematically opened for main.nf
 png.size <- 1800 # px
-tick.size <- 1/50 # 1/50 means 1/50 of the heigth of the plot
 png(filename = paste0("miami.png"), width = png.size * 2, height = png.size, units = "px", res = 300)
 
 if(empty.obs == TRUE){
     fun_gg_empty_graph(text = paste0("NO PLOT DRAWN\nTHE region PARAMETER\nMIGHT BE OUTSIDE\nOF THE RANGE OF THE VCF FILE"))
 }else if(length(obs) > 0 & nrow(obs) > 0 & ! is.null(x.lim)){
-    marging <- 0 # (chr$LENGTH_CUMUL[nrow(chr)] - xmin_plot) * 0.02
+    marging <- (chr$LENGTH_CUMUL[nrow(chr)] - xmin_plot) * 0.005 # chr$LENGTH_CUMUL and xmin_plot have been corrected depending on x.lim boundaries
+    y.min.pos <- ifelse(is.null(y.lim1), min(obs[ , top.y.column]), min(y.lim1))
+    y.max.pos <- ifelse(is.null(y.lim1), max(obs[ , top.y.column]), max(y.lim1))
     tempo.gg.name <- "gg.indiv.plot."
     tempo.gg.count <- 0
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot(obs, aes_string(x = "coord", y = top.y.column)))
@@ -601,18 +608,6 @@ if(empty.obs == TRUE){
             xintercept = c(xmin_plot, chr$LENGTH_CUMUL),
             size = 0.25,
             color = "grey80"
-        ))
-    }else{
-        y.min.pos <- ifelse(is.null(y.lim1), min(obs[ , top.y.column]), min(y.lim1))
-        y.max.pos <- ifelse(is.null(y.lim1), max(obs[ , top.y.column]), max(y.lim1))
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), annotate(
-            geom = "segment", 
-            x = c(xmin_plot, chr$LENGTH_CUMUL), 
-            xend = c(xmin_plot, chr$LENGTH_CUMUL), 
-            y = y.min.pos, 
-            yend = - abs(y.max.pos - y.min.pos) * tick.size , # conversion to px according to png() above, should have 1/50 of the png height as tick length
-            size = 0.25,
-            color = "black"
         ))
     }
     if( ! is.null(y.threshold1)){
@@ -624,11 +619,43 @@ if(empty.obs == TRUE){
         ))
     }
     if(is.null(color.column)){
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes(fill = as.factor(CHROM)), alpha = 0.8, color = "white", pch = 21, size = 1))
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_fill_manual(values = rep(c("grey20", "skyblue"), 25)))
+        if(is.null(dot.border.color)){
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(
+                aes(color = as.factor(CHROM)), 
+                alpha = 1, 
+                pch = 16, 
+                size = 1
+            ))
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_manual(values = rep(c("grey20", "skyblue"), 25)))
+        }else{
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(
+                aes(fill = as.factor(CHROM)), 
+                alpha = 1, 
+                color = dot.border.color, 
+                pch = 21, 
+                size = 1
+            ))
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_fill_manual(values = rep(c("grey20", "skyblue"), 25)))
+        }
     }else{
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(aes_string(fill = color.column), alpha = 0.8, color = "white", pch = 21, size = 1))
-        assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_fill_gradient2())
+        if(is.null(dot.border.color)){
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(
+                aes(color = color.column), 
+                alpha = 1, 
+                pch = 16, 
+                size = 1
+            ))
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_color_gradient2())
+        }else{
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_point(
+                aes(fill = as.factor(CHROM)), 
+                alpha = 1, 
+                color = dot.border.color, 
+                pch = 21, 
+                size = 1
+            ))
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_fill_gradient2())
+        }
     }
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::ggtitle(
         paste0("x.lim: ", ifelse(is.whole, "whole genome", x.lim), 
@@ -651,7 +678,7 @@ if(empty.obs == TRUE){
         }else{
             assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_y_continuous(
                 expand = c(0, 0), # remove space after after axis limits
-                limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
+                limits = if(reverse1){c(y.max.pos, y.min.pos)}else{c(y.min.pos, y.max.pos)}, # NA indicate that limits must correspond to data limits but ylim() already used
                 oob = scales::rescale_none, 
                 trans = "log10", 
                 breaks = scales::trans_breaks("log10", function(x){10^x}), 
@@ -662,7 +689,7 @@ if(empty.obs == TRUE){
     }else{
         assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_y_continuous(
             expand = c(0, 0), # remove space after after axis limits
-            limits = y.lim1, # NA indicate that limits must correspond to data limits but ylim() already used
+            limits = if(reverse1){c(y.max.pos, y.min.pos)}else{c(y.min.pos, y.max.pos)}, # NA indicate that limits must correspond to data limits but ylim() already used
             oob = scales::rescale_none, 
             trans = "identity"
         ))
@@ -679,22 +706,30 @@ if(empty.obs == TRUE){
         axis.line.y.left = element_line(size = 0.25) 
     ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), geom_hline(
-        yintercept = ifelse(is.null(y.lim1), min(obs[ , top.y.column]), min(y.lim1)), 
+        yintercept = ifelse(
+            is.null(y.lim1), 
+            ifelse(reverse1, max(obs[ , top.y.column]), min(obs[ , top.y.column])), 
+            ifelse(reverse1, max(y.lim1), min(y.lim1))
+        ), 
         size = 0.25
     ))
+    # add tick lines if vgrid is FALSE
+    if( ! vgrid){
+        gline = linesGrob(y = c(-0.02, 0),  gp = gpar(col = "black", lwd = 0.5))
+        for(i2 in c(xmin_plot, chr$LENGTH_CUMUL)){
+            assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::annotation_custom(gline, xmin = i2, xmax = i2, ymin = -Inf, ymax = Inf))
+        }
+    }
+
 
     fin.plot1 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name, 1:tempo.gg.count), collapse = " + ")))))
     # tempo.output <- ggplot2::ggplot_build(fin.plot1)
 
-    y.min.pos2 <- ifelse(is.null(y.lim2), min(obs[ , bottom.y.column]), min(y.lim2))
-    y.max.pos2 <- ifelse(is.null(y.lim2), max(obs[ , bottom.y.column]), max(y.lim2))
-    top.plot.dist <- abs(y.max.pos - y.min.pos)
-    bottom.plot.dist <- abs(y.max.pos2 - y.min.pos2)
-    ratio <- top.plot.dist / bottom.plot.dist 
-
     if(is.null(bottom.y.column)){
         suppressMessages(suppressWarnings(gridExtra::grid.arrange(fin.plot1, ncol=1, nrow = 1)))
     }else{
+        y.min.pos2 <- ifelse(is.null(y.lim2), min(obs[ , bottom.y.column]), min(y.lim2))
+        y.max.pos2 <- ifelse(is.null(y.lim2), max(obs[ , bottom.y.column]), max(y.lim2))
         tempo.gg.name2 <- "gg.indiv.plot."
         tempo.gg.count2 <- 0
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), ggplot(obs, aes_string(x = "coord", y = bottom.y.column)))
@@ -703,17 +738,6 @@ if(empty.obs == TRUE){
                 xintercept = c(xmin_plot, chr$LENGTH_CUMUL),
                 size = 0.25,
                 color = "grey80"
-            ))
-        }else{
-
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), annotate(
-                geom = "segment", 
-                x = c(xmin_plot, chr$LENGTH_CUMUL), 
-                xend = c(xmin_plot, chr$LENGTH_CUMUL), 
-                y = y.min.pos2, 
-                yend = - abs(y.max.pos2 - y.min.pos2) * tick.size * ratio, # (tempo.output$data[[1]][ , "yend"]) / (y.max.pos - y.min.pos) * (png.size - 0)) -> conversion to px according to png() above, then 
-                size = 0.25,
-                color = "black"
             ))
         }
         if( ! is.null(y.threshold2)){
@@ -725,11 +749,43 @@ if(empty.obs == TRUE){
             ))
         }
         if(is.null(color.column)){
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes(fill = as.factor(CHROM)), alpha = 0.8, color = "white", pch = 21, size = 1))
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_fill_manual(values = rep(c("grey20", "skyblue"), 25)))
+            if(is.null(dot.border.color)){
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(
+                    aes(color = as.factor(CHROM)), 
+                    alpha = 1, 
+                    pch = 16, 
+                    size = 1
+                ))
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_manual(values = rep(c("grey20", "skyblue"), 25)))
+            }else{
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(
+                    aes(fill = as.factor(CHROM)), 
+                    alpha = 1, 
+                    color = dot.border.color, 
+                    pch = 21, 
+                    size = 1
+                ))
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_fill_manual(values = rep(c("grey20", "skyblue"), 25)))
+            }
         }else{
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(aes_string(fill = color.column), alpha = 0.8, color = "white", pch = 21, size = 1))
-            assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_fill_gradient2())
+            if(is.null(dot.border.color)){
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(
+                    aes(color = color.column), 
+                    alpha = 1, 
+                    pch = 16, 
+                    size = 1
+                ))
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_color_gradient2())
+            }else{
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_point(
+                    aes(fill = as.factor(CHROM)), 
+                    alpha = 1, 
+                    color = dot.border.color, 
+                    pch = 21, 
+                    size = 1
+                ))
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_fill_gradient2())
+            }
         }
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_x_continuous(
             expand = c(0, 0), # remove space after after axis limits
@@ -745,7 +801,7 @@ if(empty.obs == TRUE){
             }else{
                 assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
                     expand = c(0, 0), # remove space after after axis limits
-                    limits = y.lim2, # NA indicate that limits must correspond to data limits but ylim() already used
+                    limits = if(reverse2){c(y.min.pos2, y.max.pos2)}else{c(y.max.pos2, y.min.pos2)}, # NA indicate that limits must correspond to data limits but ylim() already used
                     oob = scales::rescale_none, 
                     trans = "log10", 
                     breaks = scales::trans_breaks("log10", function(x){10^x}), 
@@ -756,9 +812,9 @@ if(empty.obs == TRUE){
         }else{
             assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), scale_y_continuous(
                 expand = c(0, 0), # remove space after after axis limits
-                limits = y.lim2, # NA indicate that limits must correspond to data limits but ylim() already used
+                limits = if(reverse2){c(y.min.pos2, y.max.pos2)}else{c(y.max.pos2, y.min.pos2)}, # NA indicate that limits must correspond to data limits but ylim() already used
                 oob = scales::rescale_none, 
-                trans = "reverse" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
+                trans = "identity" # equivalent to ggplot2::scale_y_reverse() but create the problem of y-axis label disappearance with y.lim decreasing. Thus, do not use. Use ylim() below and after this
             ))
         }
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), theme_bw())
@@ -773,15 +829,31 @@ if(empty.obs == TRUE){
             axis.text.x = element_blank(),
             axis.ticks.x = element_blank(), 
         ))
+        # add x-axis line
         assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), geom_hline(
-            yintercept = ifelse(is.null(y.lim2), min(obs[ , bottom.y.column]), min(y.lim2)),
+            yintercept = ifelse(
+                is.null(y.lim2), 
+                ifelse(reverse2, max(obs[ , bottom.y.column]), min(obs[ , bottom.y.column])), 
+                ifelse(reverse2, max(y.lim2), min(y.lim2))
+            ),
             size = 0.25
         ))
+        # add tick lines if vgrid is FALSE
+        if( ! vgrid){
+            gline = linesGrob(y = c(1, 1.02),  gp = gpar(col = "black", lwd = 0.5))
+            for(i2 in c(xmin_plot, chr$LENGTH_CUMUL)){
+                assign(paste0(tempo.gg.name2, tempo.gg.count2 <- tempo.gg.count2 + 1), ggplot2::annotation_custom(gline, xmin = i2, xmax = i2, ymin = -Inf, ymax = Inf))
+            }
+        }
 
         fin.plot2 <- suppressMessages(suppressWarnings(eval(parse(text = paste(paste0(tempo.gg.name2, 1:tempo.gg.count2), collapse = " + ")))))
         gl <- lapply(list(fin.plot1, fin.plot2), ggplotGrob)  
         wd <- do.call(unit.pmax, lapply(gl, "[[", 'widths'))
         gl <- lapply(gl, function(x){x[['widths']] = wd ; x})
+        if( ! vgrid){
+            gl[[1]]$layout$clip[gl[[1]]$layout$name=="panel"] <- "off"
+            gl[[2]]$layout$clip[gl[[2]]$layout$name=="panel"] <- "off"
+        }
         suppressMessages(suppressWarnings(gridExtra::grid.arrange(gl[[1]], gl[[2]], ncol=1, nrow = 2)))
     }
 }else{

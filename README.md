@@ -188,15 +188,22 @@ echo -e '
 fisher="${PWD}/dataset/res_fisher.tsv.gz"
 chr="${PWD}/dataset/hg19_grch37p5_chr_size_cumul.txt"
 x_lim="chr1"
-bottom_y_column="AF"
-color_column="NULL"
-y_lim1="NULL"
-y_lim2="NULL"
+vgrid <- "TRUE"
+top.y.column <- "NEG_LOG10_P_VALUE"
+bottom.y.column <- "AF"
+color.column <- "NULL"
+dot.border.color <- "white"
+y.lim1 <- "NULL"
+y.lim2 <- "NULL"
+reverse1 <- "FALSE"
+reverse2 <- "TRUE"
+y.threshold1 <- "1.2"
+y.threshold2 <- "0.5"
 y_log1="FALSE"
 y_log2="TRUE"
 cute="https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R"
 
-Rscript ${PWD}/bin/miami.R ${fisher} ${chr} "${x_lim}" "${bottom_y_column}" "${color_column}" "${y_lim1}" "${y_lim2}" "${y_log1}" "${y_log2}" "${cute}" "miami_report.txt"
+Rscript ${PWD}/bin/miami.R ${fisher} ${chr} "${x_lim}" "${vgrid}" "${top_y_column}" "${bottom_y_column}" "${color_column}" "${dot_border_color}" "${y_lim1}" "${y_lim2}" "${y_reverse1}" "${y_reverse2}" "${y_threshold1}" "${y_threshold2}" "${y_log1}" "${y_log2}" "${cute}" "miami_report.txt"
 ' | sudo docker run --workdir /tmp/ -i --mount "type=bind,src=${PWD},dst=/tmp/" --entrypoint bash gmillot/r_v4.1.2_extended_v2.1:gitlab_v8.8
 ```
 
@@ -284,6 +291,11 @@ Gitlab developers
 
 <br /><br />
 ## WHAT'S NEW IN
+
+
+### v2.4
+
+miamiplot: new features added and bug removed
 
 
 ### v2.3
