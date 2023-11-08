@@ -67,10 +67,6 @@ The dataset used in the *nextflow.config* file, as example, is available at http
 | **Dyslexia.pedigree.txt** | Pedigree file. |
 | **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot |
 
-**example_of_results**: folder containing examples of result obtained with the dataset.
-<br /><br />
-&nbsp;&nbsp;&nbsp;&nbsp;See the OUTPUT section for the description of the folder and files.
-
 
 <br /><br />
 ## HOW TO RUN
@@ -116,7 +112,7 @@ with -c to specify the name of the config file used.
 Run the following command from where you want the results:
 
 <pre>
-nextflow run -hub pasteur gmillot/slivar_vcf_extraction -r v1.0.0
+nextflow run -hub pasteur gmillot/fisher_for_vcf -r v1.0.0
 </pre>
 
 <br /><br />
@@ -127,7 +123,7 @@ nextflow run -hub pasteur gmillot/slivar_vcf_extraction -r v1.0.0
 Copy-paste this after having modified the EXEC_PATH variable:
 
 <pre>
-EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/slivar_vcf_extraction" # where the bin folder of the main.nf script is located
+EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/fisher_for_vcf" # where the bin folder of the main.nf script is located
 export CONF_BEFORE=/opt/gensoft/exe # on maestro
 
 export JAVA_CONF=java/13.0.2
@@ -152,7 +148,7 @@ Modify the second line of the code below, and run from where the *main.nf* and *
 
 <pre>
 HOME_INI=$HOME
-HOME="${ZEUSHOME}/slivar_vcf_extraction/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/slivar_vcf_extraction/, for instance. See NFX_HOME in the nextflow software script
+HOME="${ZEUSHOME}/fisher_for_vcf/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/, for instance. See NFX_HOME in the nextflow software script
 trap '' SIGINT
 nextflow run --modules ${MODULES} main.nf -c nextflow.config
 HOME=$HOME_INI
@@ -167,9 +163,9 @@ Modify the first and third lines of the code below, and run (results will be whe
 <pre>
 VERSION="v1.0"
 HOME_INI=$HOME
-HOME="${ZEUSHOME}/slivar_vcf_extraction/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/slivar_vcf_extraction/, for instance. See NFX_HOME in the nextflow software script
+HOME="${ZEUSHOME}/fisher_for_vcf/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/, for instance. See NFX_HOME in the nextflow software script
 trap '' SIGINT
-nextflow run --modules ${MODULES} -hub pasteur gmillot/slivar_vcf_extraction -r $VERSION -c $HOME/nextflow.config
+nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config
 HOME=$HOME_INI
 trap SIGINT
 </pre>
@@ -179,7 +175,7 @@ trap SIGINT
 
 #### Message 1
 ```
-Unknown error accessing project `gmillot/slivar_vcf_extraction` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/slivar_vcf_extraction
+Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
 ```
 
 Purge using:
@@ -189,7 +185,7 @@ rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 
 #### Message 2
 ```
-WARN: Cannot read project manifest -- Cause: Remote resource not found: https://gitlab.pasteur.fr/api/v4/projects/gmillot%2Fslivar_vcf_extraction
+WARN: Cannot read project manifest -- Cause: Remote resource not found: https://gitlab.pasteur.fr/api/v4/projects/gmillot%2Ffisher_for_vcf
 ```
 
 Contact Gael Millot (distant repository is not public).
