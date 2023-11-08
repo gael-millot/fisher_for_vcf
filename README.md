@@ -11,7 +11,9 @@
 
 
    - [AIM](#aim)
+   - [WARNING](#warning)
    - [CONTENT](#content)
+   - [INPUT](#input)
    - [HOW TO RUN](#how-to-run)
    - [OUTPUT](#output)
    - [VERSIONS](#versions)
@@ -25,28 +27,44 @@
 ## AIM
 
 
-Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
+- Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
+- Return a res.tsv file and a Miami plot.
+- The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
+- Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section.
+
 <br /><br />
-Return a res.tsv file and a Miami plot.
-<br /><br />
-The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
-<br /><br />
-Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section. Warning: this is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present. Thus, this VCF file cannot be used by fisher_for_vcf as initial input.
+## WARNINGS
+
+The returned res.vcf is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present. Thus, this VCF file cannot be used by fisher_for_vcf as initial input.
 
 <br /><br />
 ## CONTENT
 
-
-**fisher_for_vcf.nf**: file that can be executed using a CLI (command line interface).
-
-**fisher_for_vcf.config**: parameter settings for the fisher_for_vcf.nf file.
-
-**dataset**: folder containing some datasets than can be used as examples.
-
-| File | Description |
+| fisher_for_vcf folder | Description |
 | --- | --- |
-| **Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz** | First 10,000 lines of /pasteur/zeus/projets/p02/ghfc_wgs_zeus/WGS/Dyslexia/vcf/Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz |
-| **Dyslexia.pedigree.txt** | Pedigree associated to Dyslexia.gatk-vqsr.splitted.norm.vep.merged.vcf.gz |
+| **main.nf** | File that can be executed using a linux terminal, a MacOS terminal or Windows 10 WSL2. |
+| **nextflow.config** | Parameter settings for the *main.nf* file. Users have to open this file, set the desired settings and save these modifications before execution. |
+| **bin folder** | Contains files required by the *main.nf* file. |
+
+
+<br /><br />
+## INPUT
+
+| Required files |
+| --- |
+| Variant Calling Format (VCF) file (zipped or not). |
+| Pedigree file. |
+| Human chromo infos file. |
+
+
+<br /><br />
+The dataset used in the *nextflow.config* file, as example, is available at https://zenodo.org/records/10084500/files/fisher_for_vcf.zip
+
+
+| Dataset folder | Description |
+| --- | --- |
+| **Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz** | VCF file. |
+| **Dyslexia.pedigree.txt** | Pedigree file. |
 | **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot |
 
 **example_of_results**: folder containing examples of result obtained with the dataset.
@@ -57,160 +75,142 @@ Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e.
 <br /><br />
 ## HOW TO RUN
 
+### 1. Prerequisite
 
-### From local using the committed version on gitlab
+Installation of:<br />
+[nextflow DSL1](https://github.com/nextflow-io/nextflow)<br />
+[Graphviz](https://www.graphviz.org/download/), `sudo apt install graphviz` for Linux ubuntu<br />
+[Apptainer](https://github.com/apptainer/apptainer)<br />
 
-1) Create the scm file:
-
-```bash
-providers {
-    pasteur {
-        server = 'https://gitlab.pasteur.fr'
-        platform = 'gitlab'
-    }
-}
-```
-
-And save it as 'scm' in the .nextflow folder. For instance in:
-\\wsl$\Ubuntu-20.04\home\gael\.nextflow
-
-Warning: ssh key must be set for gitlab, to be able to use this procedure (see protocol 44).
+<br /><br />
+### 2. Local running (personal computer)
 
 
-2) Mount a server if required:
+#### 2.1. *main.nf* file in the personal computer
 
-```bash
-DRIVE="C"
+- Mount a server if required:
+
+<pre>
+DRIVE="Z" # change the letter to fit the correct drive
 sudo mkdir /mnt/share
 sudo mount -t drvfs $DRIVE: /mnt/share
-```
+</pre>
 
-Warning: if no mounting, it is possible that nextflow does nothing, or displays a message like
-```
-Launching `fisher_for_vcf.nf` [loving_morse] - revision: d5aabe528b
+Warning: if no mounting, it is possible that nextflow does nothing, or displays a message like:
+<pre>
+Launching `main.nf` [loving_morse] - revision: d5aabe528b
 /mnt/share/Users
+</pre>
+
+- Run the following command from where the *main.nf* and *nextflow.config* files are (example: \\wsl$\Ubuntu-20.04\home\gael):
+
+<pre>
+nextflow run main.nf -c nextflow.config
+</pre>
+
+with -c to specify the name of the config file used.
+
+<br /><br />
+#### 2.3. *main.nf* file in the public gitlab repository
+
+Run the following command from where you want the results:
+
+<pre>
+nextflow run -hub pasteur gmillot/slivar_vcf_extraction -r v1.0.0
+</pre>
+
+<br /><br />
+### 3. Distant running (example with the Pasteur cluster)
+
+#### 3.1. Pre-execution
+
+Copy-paste this after having modified the EXEC_PATH variable:
+
+<pre>
+EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/slivar_vcf_extraction" # where the bin folder of the main.nf script is located
+export CONF_BEFORE=/opt/gensoft/exe # on maestro
+
+export JAVA_CONF=java/13.0.2
+export JAVA_CONF_AFTER=bin/java # on maestro
+export APP_CONF=apptainer/1.2.3
+export APP_CONF_AFTER=bin/apptainer # on maestro
+export GIT_CONF=git/2.39.1
+export GIT_CONF_AFTER=bin/git # on maestro
+export GRAPHVIZ_CONF=graphviz/2.42.3
+export GRAPHVIZ_CONF_AFTER=bin/graphviz # on maestro
+
+MODULES="${CONF_BEFORE}/${JAVA_CONF}/${JAVA_CONF_AFTER},${CONF_BEFORE}/${APP_CONF}/${APP_CONF_AFTER},${CONF_BEFORE}/${GIT_CONF}/${GIT_CONF_AFTER}/${GRAPHVIZ_CONF}/${GRAPHVIZ_CONF_AFTER}"
+cd ${EXEC_PATH}
+chmod 755 ${EXEC_PATH}/bin/*.* # not required if no bin folder
+module load ${JAVA_CONF} ${APP_CONF} ${GIT_CONF} ${GRAPHVIZ_CONF}
+</pre>
+
+<br /><br />
+#### 3.2. *main.nf* file in a cluster folder
+
+Modify the second line of the code below, and run from where the *main.nf* and *nextflow.config* files are (which has been set thanks to the EXEC_PATH variable above):
+
+<pre>
+HOME_INI=$HOME
+HOME="${ZEUSHOME}/slivar_vcf_extraction/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/slivar_vcf_extraction/, for instance. See NFX_HOME in the nextflow software script
+trap '' SIGINT
+nextflow run --modules ${MODULES} main.nf -c nextflow.config
+HOME=$HOME_INI
+trap SIGINT
+</pre>
+
+<br /><br />
+#### 3.3. *main.nf* file in the public gitlab repository
+
+Modify the first and third lines of the code below, and run (results will be where the EXEC_PATH variable has been set above):
+
+<pre>
+VERSION="v1.0"
+HOME_INI=$HOME
+HOME="${ZEUSHOME}/slivar_vcf_extraction/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/slivar_vcf_extraction/, for instance. See NFX_HOME in the nextflow software script
+trap '' SIGINT
+nextflow run --modules ${MODULES} -hub pasteur gmillot/slivar_vcf_extraction -r $VERSION -c $HOME/nextflow.config
+HOME=$HOME_INI
+trap SIGINT
+</pre>
+
+<br /><br />
+### 4. Error messages and solutions
+
+#### Message 1
+```
+Unknown error accessing project `gmillot/slivar_vcf_extraction` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/slivar_vcf_extraction
 ```
 
+Purge using:
+<pre>
+rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
+</pre>
 
-3) Then run the following command from here \\wsl$\Ubuntu-20.04\home\gael:
-
-```bash
-nextflow run -hub pasteur gmillot/fisher_for_vcf -r v1.0.0
+#### Message 2
+```
+WARN: Cannot read project manifest -- Cause: Remote resource not found: https://gitlab.pasteur.fr/api/v4/projects/gmillot%2Fslivar_vcf_extraction
 ```
 
+Contact Gael Millot (distant repository is not public).
 
-4) If an error message appears, like:
-```
-WARN: Cannot read project manifest -- Cause: Remote resource not found: https://gitlab.pasteur.fr/api/v4/projects/gmillot%2Ffisher_for_vcf
-```
-Make the distant repo public
-
-
-5) If an error message appears, like:
+#### Message 3
 
 ```
 permission denied
 ```
 
-See chmod in protocol 44.
-
-
-### From local using local file
-
-Like above but then run the following command from here \\wsl$\Ubuntu-20.04\home\gael:
-
-```bash
-nextflow run -c fisher_for_vcf.config fisher_for_vcf.nf
+Use chmod to change the user rights. Example linked to files in the bin folder: 
+```
+chmod 755 bin/*.*
 ```
 
-with -c to specify the name of the config file used.
-
-If an error message appears, like:
-```
-Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
-```
-Purge using:
-```
-rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
-```
-
-
-### From a cluster using a committed version on gitlab
-
-Start with:
-
-```bash
-EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron" # where the bin folder of the fisher_for_vcf.nf script is located
-export CONF_BEFORE=/opt/gensoft/exe # on maestro
-
-export JAVA_CONF=java/13.0.2
-export JAVA_CONF_AFTER=bin/java # on maestro
-export SINGU_CONF=singularity
-export SINGU_CONF_AFTER=bin/singularity # on maestro
-export GIT_CONF=git/2.25.0
-export GIT_CONF_AFTER=bin/git # on maestro
-
-MODULES="${CONF_BEFORE}/${JAVA_CONF}/${JAVA_CONF_AFTER},${CONF_BEFORE}/${SINGU_CONF}/${SINGU_CONF_AFTER},${CONF_BEFORE}/${GIT_CONF}/${GIT_CONF_AFTER}"
-cd ${EXEC_PATH}
-chmod 755 ${EXEC_PATH}/bin/*.*
-module load ${JAVA_CONF} ${SINGU_CONF} ${GIT_CONF}
-
-```
-
-Then run:
-
-```bash
-# distant fisher_for_vcf.nf file
-HOME="${ZEUSHOME}/fisher_for_vcf/" ; trap '' SIGINT ; nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r v1.0 -c $HOME/fisher_for_vcf.config ; HOME="/pasteur/appa/homes/gmillot/"  ; trap SIGINT
-
-# local fisher_for_vcf.nf file ($HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/. See NFX_HOME in the nextflow soft script)
-HOME="${ZEUSHOME}/fisher_for_vcf/" ; trap '' SIGINT ; nextflow run --modules ${MODULES} -c fisher_for_vcf.config fisher_for_vcf.nf ; HOME="/pasteur/appa/homes/gmillot/" ; trap SIGINT
-```
-
-If an error message appears, like:
-```
-Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
-```
-Purge using:
-```
-rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
-```
-
-
-### To get the miamiplot only
-
-Copy-paste this into a linux console
-
-```
-PWD=$(pwd)
-# see the fisher_for_vcf.config file for info about the parameters
-echo -e '
-fisher="${PWD}/dataset/res_fisher.tsv.gz"
-chr="${PWD}/dataset/hg19_grch37p5_chr_size_cumul.txt"
-x_lim="chr1"
-vgrid <- "TRUE"
-top.y.column <- "NEG_LOG10_P_VALUE"
-bottom.y.column <- "AF"
-color.column <- "NULL"
-dot.border.color <- "white"
-y.lim1 <- "NULL"
-y.lim2 <- "NULL"
-reverse1 <- "FALSE"
-reverse2 <- "TRUE"
-y.threshold1 <- "1.2"
-y.threshold2 <- "0.5"
-y_log1="FALSE"
-y_log2="TRUE"
-cute="https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R"
-
-Rscript ${PWD}/bin/miami.R ${fisher} ${chr} "${x_lim}" "${vgrid}" "${top_y_column}" "${bottom_y_column}" "${color_column}" "${dot_border_color}" "${y_lim1}" "${y_lim2}" "${y_reverse1}" "${y_reverse2}" "${y_threshold1}" "${y_threshold2}" "${y_log1}" "${y_log2}" "${cute}" "miami_report.txt"
-' | sudo docker run --workdir /tmp/ -i --mount "type=bind,src=${PWD},dst=/tmp/" --entrypoint bash gmillot/r_v4.1.2_extended_v2.1:gitlab_v8.8
-```
-
-The outputs files are in $PWD, i.e., where the code has been executed.
 
 <br /><br />
 ## OUTPUT
+
+An example of results obtained with the dataset is present at this address: https://zenodo.org/records/10084500/files/fisher_for_vcf.zip
+<br /><br />
 
 
 **reports**: folder containing all the reports of the different processes including the *fisher_for_vcf.config* file used, *vcf_csq_subfield_titles.txt* (control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed), *vcf_info_field_titles.txt* (control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed)
@@ -279,19 +279,30 @@ Not yet published
 
 [Freddy Cliquet](https://gitlab.pasteur.fr/fcliquet), GHFC, Institut Pasteur, Paris, France
 
-[Gael A. Millot](https://gitlab.pasteur.fr/gmillot), Hub-CBD, Institut Pasteur, Paris, France
+[Gael A. Millot](https://gitlab.pasteur.fr/gmillot), Hub, Institut Pasteur, Paris, France
 
 <br /><br />
 ## ACKNOWLEDGEMENTS
 
 
-The mentioned softwares and packages developers & maintainers
+The developers & maintainers of the mentioned softwares and packages, including:
 
-Gitlab developers
+- [Slivar](https://github.com/brentp/slivar)
+- [Nextflow](https://www.nextflow.io/)
+- [Apptainer](https://apptainer.org/)
+- [Docker](https://www.docker.com/)
+- [Gitlab](https://about.gitlab.com/)
+- [Bash](https://www.gnu.org/software/bash/)
+- [Ubuntu](https://ubuntu.com/)
+
 
 <br /><br />
 ## WHAT'S NEW IN
 
+### v2.5
+
+- .config improved
+- README improved. Dataset and results are in zenodo
 
 ### v2.4
 

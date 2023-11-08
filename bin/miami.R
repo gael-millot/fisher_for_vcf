@@ -502,13 +502,13 @@ if(length(obs) > 0 & nrow(obs) > 0){
         tempo <- strsplit(x = x.lim, split = ",")[[1]]
         tempo <- gsub(x = tempo, pattern = " ", replacement = "")
         if( ! all(grepl(x = tempo, pattern = "^chr.+"))){
-            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST START WITH \"chr\" IF NOT \"none\":\n", paste0(x_lim, collapse = " "))
+            tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST START WITH \"chr\" IF NOT \"none\":\n", paste0(x.lim, collapse = " "))
             stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
         }
         if(any(grepl(x = tempo, pattern = ":"))){
             # means that there are coordinates
             if( ! all(grepl(tempo, pattern = "-"))){# normally no NA with is.null()
-                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x.lim, collapse = " "))
                 stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
             }
             tempo2 <- strsplit(x = tempo, split = ":")
@@ -521,13 +521,13 @@ if(length(obs) > 0 & nrow(obs) > 0){
             xmax_x_lim <- sapply(X = tempo3, FUN = function(x){x[2]})
             xmax_x_lim <- gsub(x = xmax_x_lim, pattern = " ", replacement = "")
             if(any(grepl(xmin_x_lim, pattern = "\\D")) | any(grepl(xmax_x_lim, pattern = "\\D"))){# normally no NA with is.null()
-                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+                tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\" IF COORDINATES ARE SPECIFIED: \n", paste0(x.lim, collapse = " "))
                 stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
             }else{
                 xmin_x_lim <- as.integer(xmin_x_lim)
                 xmax_x_lim <- as.integer(xmax_x_lim)
                 if(any(xmax_x_lim - xmin_x_lim < 0)){
-                    tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN WITH ORDERED COORDINATES, LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\", IF COORDINATES ARE SPECIFIED: \n", paste0(x_lim, collapse = " "))
+                    tempo.cat <- paste0("ERROR IN miami.R:\nTHE x_lim PARAMETER MUST BE WRITTEN WITH ORDERED COORDINATES, LIKE THIS \"chr7:0-147000000, chr10:1000000-2000000\", IF COORDINATES ARE SPECIFIED: \n", paste0(x.lim, collapse = " "))
                     stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
                 }
             }

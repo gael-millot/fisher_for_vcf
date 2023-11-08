@@ -189,7 +189,7 @@ process WorkflowVersion { // create a file with the workflow version in out_path
     echo "execution mode": ${system_exec} >> Run_info.txt
     modules=$modules # this is just to deal with variable interpretation during the creation of the .command.sh file by nextflow. See also \$modules below
     if [[ ! -z \$modules ]] ; then
-        echo "loaded modules (according to specification by the user thanks to the --modules argument of main.nf)": ${modules} >> Run_info.txt
+        echo "loaded modules (according to specification by the user thanks to the --modules argument of main.nf): ${modules}" >> Run_info.txt
     fi
     echo "Manifest's pipeline version: ${workflow.manifest.version}" >> Run_info.txt
     echo "result path: ${out}" >> Run_info.txt
