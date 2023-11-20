@@ -27,9 +27,9 @@
 ## AIM
 
 
-- Compute the Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
+- Compute the two-sided Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
 - Return a res.tsv file and a Miami plot.
-- The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the fisher_for_vcf.config file, as well as the OUTPUT section below.
+- The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the nextflow.config file, as well as the OUTPUT section below.
 - Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section.
 
 <br /><br />
@@ -209,7 +209,7 @@ An example of results obtained with the dataset is present at this address: http
 <br /><br />
 
 
-**reports**: folder containing all the reports of the different processes including the *fisher_for_vcf.config* file used, *vcf_csq_subfield_titles.txt* (control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed), *vcf_info_field_titles.txt* (control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed)
+**reports**: folder containing all the reports of the different processes including the *nextflow.config* file used, *vcf_csq_subfield_titles.txt* (control file indicating the names of the CSQ subfields, as indicated in the header of the VCF file analyzed), *vcf_info_field_titles.txt* (control file indicating the names of the INFO fields, as indicated in the header of the VCF file analyzed)
 <br /><br />
 **Miami.png**: miami plot in the .png format.
 <br /><br />
@@ -217,7 +217,7 @@ An example of results obtained with the dataset is present at this address: http
 <br /><br />
 &nbsp;&nbsp;&nbsp;&nbsp;Rows:
 <br />
-<ul><li>Each row representing a different variant if the tsv_extra_fields parameter of the fisher_for_vcf.config file does not contain the CSQ field (VEP).
+<ul><li>Each row representing a different variant if the tsv_extra_fields parameter of the nextflow.config file does not contain the CSQ field (VEP).
 <br />
 </li><li>Several lines per variant otherwise, depending on the number of subfields (comma separated) in the CSQ field (VEP) of the INFO field of the VCF file.
 </li><br />
@@ -236,8 +236,8 @@ An example of results obtained with the dataset is present at this address: http
 | **IMPACT** | severity of the ALT consequence (IMPACT field of the CSQ field (VEP) of INFO field of the VCF) |
 | **AFF** | Count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases. Example: {0:4, 1:2} for 4 cases HOM_REF and 2 cases HET |
 | **UNAFF** | as in *aff* in the unaffected cases |
-| **OR** | Odds ratio (n11/n12)/(n21/n22) = (n11\*n22)/(n12\*n21) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff<br /></li><li>n12 = nHOM_REF_aff<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff<br /></li><li>n22 = nHOM_REF_unaff<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff |
-| **P_VALUE** | p-value of the exact fisher test |
+| **OR** | Odds ratio (n11/n12)/(n21/n22) = (n11\*n22)/(n12\*n21) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff (carrier in aff)<br /></li><li>n12 = nHOM_REF_aff (non-carrier in aff)<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff (carrier in unaff)<br /></li><li>n22 = nHOM_REF_unaff (non-carrier in unaff)<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff |
+| **P_VALUE** | p-value of the exact two-sided Fisher test |
 | **NEG_LOG10_P_VALUE** | -log10 of the p-value |
 | **PATIENT_NB** | Number of AFF and UNAFF used for the fisher data |
 | Optional colums | |
