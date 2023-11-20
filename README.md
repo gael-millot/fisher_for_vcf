@@ -3,7 +3,7 @@
 
 | usage | dependencies |
 | --- | --- |
-| [![Nextflow](https://img.shields.io/badge/code-Nextflow-blue?style=plastic)](https://www.nextflow.io/) | [![Dependencies: Nextflow Version](https://img.shields.io/badge/Nextflow-v21.04.2-blue?style=plastic)](https://github.com/nextflow-io/nextflow) |
+| [![Nextflow](https://img.shields.io/badge/code-Nextflow-blue?style=plastic)](https://www.nextflow.io/) | [![Dependencies: Nextflow Version](https://img.shields.io/badge/Nextflow-v23.04.4-blue?style=plastic)](https://github.com/nextflow-io/nextflow) |
 | [![License: GPL-3.0](https://img.shields.io/badge/licence-GPL%20(%3E%3D3)-green?style=plastic)](https://www.gnu.org/licenses) | |
 
 <br /><br />
@@ -28,6 +28,7 @@
 
 
 - Compute the two-sided Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
+- Odds ratio used is (n11/n12)/(n21/n22) = (n11\*n22)/(n12\*n21) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff (carrier in aff)<br /></li><li>n12 = nHOM_REF_aff (non-carrier in aff)<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff (carrier in unaff)<br /></li><li>n22 = nHOM_REF_unaff (non-carrier in unaff)<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff
 - Return a res.tsv file and a Miami plot.
 - The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the nextflow.config file, as well as the OUTPUT section below.
 - Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section.
@@ -294,6 +295,12 @@ The developers & maintainers of the mentioned softwares and packages, including:
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v3.0
+
+- DSL1 -> DSL2.
+- Two-sided test Fisher test added but remain to be control the resulting p value.
+
 
 ### v2.5
 

@@ -1,4 +1,4 @@
-nextflow.enable.dsl=1
+nextflow.enable.dsl=2
 /*
 #########################################################################
 ##                                                                     ##
@@ -13,173 +13,21 @@ nextflow.enable.dsl=1
 */
 
 
-//////// Options of nextflow run
-
-params.modules = ""
-
-//////// end Options of nextflow run
-
-
-//////// Variables
-
-// from the nextflow.config file
-config_file = file("${projectDir}/fisher_for_vcf.config") // file() create a path object necessary o then create the file
-log_file = file("${launchDir}/.nextflow.log")
-
-// files objects created in order to use .exists() to test the path
-chr = file(chr_path)
-ped = file(ped_path)
-cute = file(cute_path) // converted to file path directly to use it as a constant
-out = file(out_path)
-// end from the nextflow.config file
-
-// from parameters (options of the nexflow command line)
-modules = params.modules // remove the dot -> can be used in bash scripts
-// end from parameters (options of the nexflow command line)
-
-
-//////// end Variables
-
-
-//////// Variables from config.file that need to be modified
-
-
-if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miami plot
-    x_lim_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" // I have added both notations "chr23", "chr24", "chr25" or "chrY", "chrX", "chrM" because either one or the other can be used in a VCF file 
-}else if(x_lim == 'region'){
-    x_lim_val = region
-}else{
-    x_lim_val = x_lim // value for the miami plot
-}
-
-//////// end Variables from config.file that need to be modified
-
-
-//////// Channels
-
-
-Channel.fromPath("${sample_path}", checkIfExists: false).into{vcf_ch1 ; vcf_ch2 ; vcf_ch3} // I could use true, but I prefer to perform the check below, in order to have a more explicit error message
-if(region == 'none'){  // for combine below for parallelization of the fisher process
-    region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM") // I have added both notations "chr23", "chr24", "chr25" or "chrY", "chrX", "chrM" because either one or the other can be used in a VCF file 
-}else{
-    if(region =~ /,/){
-        tempo = region.replaceAll(':.+,', ',')
-    }else{
-        tempo = region
-    }
-    tempo2 = tempo.replaceAll(':.+$', '')
-    tempo3 = tempo2.replaceAll(' ', '')
-    tempo4 = tempo3.split(",") // .split(",") split according to comma and create an array https://www.tutorialspoint.com/groovy/groovy_split.htm
-    region_ch = Channel.from(tempo4) 
-}
-
-
-//////// end Channels
-
-
-
-//////// Checks
-
-sample_path_test = file("${sample_path}") // because is a channel
-tbi_test = file("${sample_path}.tbi")
-
-def file_exists1 = sample_path_test.exists()
-if( ! file_exists1){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-}else if(sample_path =~ /.*\.gz$/){
-    def file_exists2 = tbi_test.exists()
-    if( ! file_exists2){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
-    }else{
-        tbi = file("${sample_path}.tbi")
-    }
-}
-def file_exists3 = ped.exists()
-if( ! file_exists3){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN nextflow.config FILE: ${ped_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-}
-def file_exists4 = chr.exists()
-if( ! file_exists4){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN nextflow.config FILE: ${chr_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-}
-
-if( ! region in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID region PARAMETER IN nextflow.config FILE:\n${region}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! tsv_extra_fields in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID tsv_extra_fields PARAMETER IN nextflow.config FILE:\n${tsv_extra_fields}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! x_lim in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID x_lim PARAMETER IN nextflow.config FILE:\n${x_lim}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! vgrid in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID vgrid PARAMETER IN nextflow.config FILE:\n${vgrid}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! top_y_column in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID top_y_column PARAMETER IN nextflow.config FILE:\n${top_y_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! bottom_y_column in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID bottom_y_column PARAMETER IN nextflow.config FILE:\n${bottom_y_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! color_column in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID color_column PARAMETER IN nextflow.config FILE:\n${color_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_lim1 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim1 PARAMETER IN nextflow.config FILE:\n${y_lim1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_lim2 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_reverse1 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_reverse1 PARAMETER IN nextflow.config FILE:\n${y_reverse1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_reverse2 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_reverse2 PARAMETER IN nextflow.config FILE:\n${y_reverse2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_threshold1 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_threshold1 PARAMETER IN nextflow.config FILE:\n${y_threshold1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_threshold2 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_threshold2 PARAMETER IN nextflow.config FILE:\n${y_threshold2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_log1 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_log1 PARAMETER IN nextflow.config FILE:\n${y_log1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-if( ! y_log2 in String ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_log2 PARAMETER IN nextflow.config FILE:\n${y_log2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}
-def file_exists5 = cute.exists()
-if( ! file_exists5){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cute_path PARAMETER IN nextflow.config FILE:\n${cute_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-}
-
-// below : those variable are already used in the config file. Thus, to late to check them. And not possible to check inside the config file
-// system_exec
-// out_ini
-print("\n\nRESULT DIRECTORY: ${out_path}")
-print("\n\nWARNING: PARAMETERS ALREADY INTERPRETED IN THE .config FILE:")
-print("    system_exec: ${system_exec}")
-print("    out_path: ${out_path_ini}")
-print("    queue: ${queue}")
-print("    qos: ${qos}")
-print("    add_options: ${add_options}")
-print("\n\n")
-
-
-//////// end Checks
-
 
 
 //////// Processes
 
 
-process WorkflowVersion { // create a file with the workflow version in out_path
-    label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out}/reports", mode: 'copy'
+process workflowParam { // create a file with the workflow parameters in out_path
+    label 'bash'
+    publishDir "${out_path}/reports", mode: 'copy', overwrite: false
     cache 'false'
 
+    input:
+    val modules
+
     output:
-    file "Run_info.txt"
+    path "Run_info.txt"
 
     script:
     """
@@ -192,31 +40,31 @@ process WorkflowVersion { // create a file with the workflow version in out_path
         echo "loaded modules (according to specification by the user thanks to the --modules argument of main.nf): ${modules}" >> Run_info.txt
     fi
     echo "Manifest's pipeline version: ${workflow.manifest.version}" >> Run_info.txt
-    echo "result path: ${out}" >> Run_info.txt
+    echo "result path: ${out_path}" >> Run_info.txt
     echo "nextflow version: ${nextflow.version}" >> Run_info.txt
     echo -e "\\n\\nIMPLICIT VARIABLES:\\n\\nlaunchDir (directory where the workflow is run): ${launchDir}\\nprojectDir (directory where the main.nf script is located): ${projectDir}\\nworkDir (directory where tasks temporary files are created): ${workDir}" >> Run_info.txt
-    echo -e "\\n\\nUSER VARIABLES:\\n\\nout_path: ${out}\\nsample_path: ${sample_path}" >> Run_info.txt
+    echo -e "\\n\\nUSER VARIABLES:\\n\\nout_path: ${out_path}\\nsample_path: ${sample_path}" >> Run_info.txt
     """
 }
 //${projectDir} nextflow variable
 //${workflow.commandLine} nextflow variable
 //${workflow.manifest.version} nextflow variable
-//Note that variables like ${out} are interpreted in the script block
+//Note that variables like ${out_path} are interpreted in the script block
 
 
 process vcf_subfield_title {
     label 'r_ext' // see the withLabel: bash in the nextflow config file
-    publishDir "${out}/reports", mode: 'copy', pattern: "{*.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out_path}/reports", mode: 'copy', pattern: "{*.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
-    file vcf from vcf_ch1
-    file cute
+    path vcf // no parall
+    path cute
 
     output:
-    file "vcf_info_field_titles.txt" into vcf_info_field_titles_ch
-    file "vcf_csq_subfield_titles.txt" into vcf_csq_subfield_titles_ch
-    file "vcf_subfield_title_report.txt"
+    path "vcf_info_field_titles.txt", emit: vcf_info_field_titles_ch
+    path "vcf_csq_subfield_titles.txt", emit: vcf_csq_subfield_titles_ch
+    path "vcf_subfield_title_report.txt"
 
     script:
     """
@@ -228,20 +76,20 @@ process vcf_subfield_title {
 
 process fisher {
     label 'python' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out}/reports", mode: 'copy', pattern: "{fisher_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out_path}/reports", mode: 'copy', pattern: "{fisher_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
-    tuple val(region2), file(vcf) from region_ch.combine(vcf_ch2) // parallelization expected for each value of region_ch
-    file ped
-    if(sample_path =~ /.*\.gz$/){file tbi}
-    file vcf_info_field_titles from vcf_info_field_titles_ch.first()
-    file vcf_csq_subfield_titles from vcf_csq_subfield_titles_ch.first()
+    tuple val(region2), path(vcf) // parallelization expected for each value of region_ch
+    path ped
+    path tbi
+    path vcf_info_field_titles
+    path vcf_csq_subfield_titles
     val tsv_extra_fields
 
     output:
-    file "*.tsv" into fisher_ch1 // multi channel
-    file "*.txt"
+    path "*.tsv", emit: fisher_ch1 // multi channel
+    path "*.txt"
 
     script:
     """
@@ -255,19 +103,16 @@ process fisher {
     """
 }
 
-fisher_ch1.collectFile(name: "fisher.tsv", skip:1, keepHeader:true).into{fisher_ch2 ; fisher_ch3 ; fisher_ch4 ; fisher_ch5}
-//fisher_ch2.subscribe{it -> it.copyTo("${out}")} // will be published below, after zipping
-
 
 process miami_plot {
     label 'r_ext' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out}", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-    publishDir "${out}/reports", mode: 'copy', pattern: "{miami_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out_path}", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out_path}/reports", mode: 'copy', pattern: "{miami_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
-    file fisher from fisher_ch3
-    file chr
+    path fisher
+    path chr
     val x_lim_val
     val vgrid
     val top_y_column
@@ -282,11 +127,11 @@ process miami_plot {
     val y_threshold2
     val y_log1
     val y_log2
-    file cute
+    path cute
 
     output:
-    file "*.png"
-    file "miami_report.txt"
+    path "*.png"
+    path "miami_report.txt"
 
     script:
     """
@@ -298,20 +143,20 @@ process miami_plot {
 
 process tsv2vcf {
     label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out}", mode: 'copy', overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    publishDir "${out_path}", mode: 'copy', overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
-    file vcf from vcf_ch3
-    file fisher from fisher_ch4
+    path vcf
+    path fisher
 
     output:
-    file "res_fisher.*"
+    path "res_fisher.*"
 
     script:
     """
     #!/bin/bash -ue
-    PREHEADER='##fileformat=VCFv4.2;build by fisher_for_vcf.nf\\n##WARNING: This file is not a true VCF since FORMAT AND sample (indiv) columns are not present'
+    PREHEADER='##fileformat=VCFv4.2;build by main.nf\\n##WARNING: This file is not a true VCF since FORMAT AND sample (indiv) columns are not present'
     HEADER='#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO'
     echo -e \$PREHEADER > res_fisher.vcf
     FILENAME=\$(basename -- "${vcf}") # recover a file name without path
@@ -362,12 +207,11 @@ process tsv_compress {
 
     //no channel input here for the vcf, because I do not transform it
     input:
-    file tsv from fisher_ch5
+    path tsv
     // see the scope for the use of affected_patients which is already a variable from .config file
 
     output:
-    file "res_fisher.*"
-
+    path "res_fisher.*"
 
     script:
     """
@@ -378,19 +222,19 @@ process tsv_compress {
 }
 
 
-process Backup {
+process backup {
     label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out}/reports", mode: 'copy', overwrite: false // since I am in mode copy, all the output files will be copied into the publishDir. See \\wsl$\Ubuntu-20.04\home\gael\work\aa\a0e9a739acae026fb205bc3fc21f9b
+    publishDir "${out_path}/reports", mode: 'copy', overwrite: false // since I am in mode copy, all the output files will be copied into the publishDir. See \\wsl$\Ubuntu-20.04\home\gael\work\aa\a0e9a739acae026fb205bc3fc21f9b
     cache 'false'
 
     input:
-    file config_file
-    file log_file
+    path config_file
+    path log_file
 
     output:
-    file "${config_file}" // warning message if we use file config_file
-    file "${log_file}" // warning message if we use file log_file
-    file "Log_info.txt"
+    path "${config_file}" // warning message if we use file config_file
+    path "${log_file}" // warning message if we use file log_file
+    path "Log_info.txt"
 
     script:
     """
@@ -400,3 +244,235 @@ process Backup {
 
 
 //////// end Processes
+
+
+//////// Workflow
+
+
+workflow {
+
+    //////// Options of nextflow run
+
+    print("\n\nINITIATION TIME: ${workflow.start}")
+
+    //////// end Options of nextflow run
+
+
+    //////// Options of nextflow run
+
+    // --modules (it is just for the process workflowParam)
+    params.modules = "" // if --module is used, this default value will be overridden
+    // end --modules (it is just for the process workflowParam)
+
+    //////// end Options of nextflow run
+
+
+    //////// Variables
+
+    modules = params.modules // remove the dot -> can be used in bash scripts
+    config_file = file("${projectDir}/nextflow.config") // file() create a path object necessary o then create the file
+    log_file = file("${launchDir}/.nextflow.log")
+
+    // from parameters (options of the nexflow command line)
+    modules = params.modules // remove the dot -> can be used in bash scripts
+    // end from parameters (options of the nexflow command line)
+
+
+    //////// end Variables
+
+
+    //////// Variables from config.file that need to be modified
+
+
+    if(x_lim == 'whole' || (x_lim == 'region' && region == 'none')){ // for the miami plot
+        x_lim_val = "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" // I have added both notations "chr23", "chr24", "chr25" or "chrY", "chrX", "chrM" because either one or the other can be used in a VCF file 
+    }else if(x_lim == 'region'){
+        x_lim_val = region
+    }else{
+        x_lim_val = x_lim // value for the miami plot
+    }
+
+    //////// end Variables from config.file that need to be modified
+
+
+    //////// Checks
+
+    if( ! (sample_path in String) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN repertoire_profiler.config FILE:\n${sample_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }else if( ! (file(sample_path).exists()) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+    }else if(sample_path =~ /.*\.gz$/){
+        if( ! (file("${sample_path}.tbi").exists()) ){
+            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
+        }else{
+            tbi_file = file("${sample_path}.tbi")
+        }
+    }else{
+        tbi_file = file("NULL")
+    }
+    if( ! (ped_path in String) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN repertoire_profiler.config FILE:\n${ped_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }else if( ! (file(ped_path).exists()) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${ped_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+    }
+    if( ! (chr_path in String) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN repertoire_profiler.config FILE:\n${chr_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }else if( ! (file(chr_path).exists()) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${chr_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+    }
+    if( ! region in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID region PARAMETER IN nextflow.config FILE:\n${region}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! tsv_extra_fields in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID tsv_extra_fields PARAMETER IN nextflow.config FILE:\n${tsv_extra_fields}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! x_lim in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID x_lim PARAMETER IN nextflow.config FILE:\n${x_lim}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! vgrid in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID vgrid PARAMETER IN nextflow.config FILE:\n${vgrid}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! top_y_column in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID top_y_column PARAMETER IN nextflow.config FILE:\n${top_y_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! bottom_y_column in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID bottom_y_column PARAMETER IN nextflow.config FILE:\n${bottom_y_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! color_column in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID color_column PARAMETER IN nextflow.config FILE:\n${color_column}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_lim1 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim1 PARAMETER IN nextflow.config FILE:\n${y_lim1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_lim2 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_lim2 PARAMETER IN nextflow.config FILE:\n${y_lim2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_reverse1 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_reverse1 PARAMETER IN nextflow.config FILE:\n${y_reverse1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_reverse2 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_reverse2 PARAMETER IN nextflow.config FILE:\n${y_reverse2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_threshold1 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_threshold1 PARAMETER IN nextflow.config FILE:\n${y_threshold1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_threshold2 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_threshold2 PARAMETER IN nextflow.config FILE:\n${y_threshold2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_log1 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_log1 PARAMETER IN nextflow.config FILE:\n${y_log1}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! y_log2 in String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID y_log2 PARAMETER IN nextflow.config FILE:\n${y_log2}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! (cute_path in String) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cute_path PARAMETER IN repertoire_profiler.config FILE:\n${cute_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }else if( ! (file(cute_path).exists()) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cute_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${cute_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+    }
+
+    // below : those variable are already used in the config file. Thus, to late to check them. And not possible to check inside the config file
+    // system_exec
+    // out_ini
+    print("\n\nRESULT DIRECTORY: ${out_path}")
+    if("${system_exec}" != "local"){
+        print("    queue: ${queue}")
+        print("    qos: ${qos}")
+        print("    add_options: ${add_options}")
+    }
+    print("\n\n")
+
+
+    //////// end Checks
+
+    //////// Channels
+
+    vcf_ch = Channel.fromPath(sample_path) 
+
+    if(region == 'none'){  // for combine below for parallelization of the fisher process
+        region_ch = Channel.from("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chr23", "chr24", "chr25", "chrY", "chrX", "chrM") // I have added both notations "chr23", "chr24", "chr25" or "chrY", "chrX", "chrM" because either one or the other can be used in a VCF file 
+    }else{
+        if(region =~ /,/){
+            tempo = region.replaceAll(':.+,', ',')
+        }else{
+            tempo = region
+        }
+        tempo2 = tempo.replaceAll(':.+$', '')
+        tempo3 = tempo2.replaceAll(' ', '')
+        tempo4 = tempo3.split(",") // .split(",") split according to comma and create an array https://www.tutorialspoint.com/groovy/groovy_split.htm
+        region_ch = Channel.from(tempo4) 
+    }
+
+
+    //////// end Channels
+
+
+    //////// files import
+
+    // in variable because a single file. If "NULL", will create a empty file, present in work folders, but that cannot be correctly linked. Thus, if the file has to be redirected into a channel inside a process, it will not work. Thus, in the first process using meta_file, I hard copy the NULL file if required (see below)
+    ped_file = file(ped_path) // in variable because a single file
+    chr_file = file(chr_path) // in variable because a single file
+    cute_file = file(cute_path) // in variable because a single file
+
+    //////// end files import
+
+
+
+    //////// Main
+
+    workflowParam(
+        modules
+    )
+
+    vcf_subfield_title(
+        vcf_ch,
+        cute_file
+    )
+
+    fisher(
+        region_ch.combine(vcf_ch),
+        ped_file,
+        tbi_file,
+        vcf_subfield_title.out.vcf_info_field_titles_ch.first(),
+        vcf_subfield_title.out.vcf_csq_subfield_titles_ch.first(),
+        tsv_extra_fields
+    )
+
+    fisher_ch2 = fisher.out.fisher_ch1.collectFile(name: "fisher.tsv", skip: 1, keepHeader: true)
+
+    miami_plot(
+        fisher_ch2,
+        chr_file,
+        x_lim_val,
+        vgrid,
+        top_y_column,
+        bottom_y_column,
+        color_column,
+        dot_border_color,
+        y_lim1,
+        y_lim2,
+        y_reverse1,
+        y_reverse2,
+        y_threshold1,
+        y_threshold2,
+        y_log1,
+        y_log2,
+        cute_file
+    )
+
+    tsv2vcf(
+        vcf_ch,
+        fisher_ch2
+    )
+
+    tsv_compress(
+        fisher_ch2
+    )
+
+    backup(
+        config_file, 
+        log_file
+    )
+
+
+}
