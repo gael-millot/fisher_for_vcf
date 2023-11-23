@@ -6,7 +6,6 @@ nextflow.enable.dsl=2
 ##                                                                     ##
 ##     Gael A. Millot                                                  ##
 ##     Bioinformatics and Biostatistics Hub                            ##
-##     Computational Biology Department                                ##
 ##     Institut Pasteur Paris                                          ##
 ##                                                                     ##
 #########################################################################

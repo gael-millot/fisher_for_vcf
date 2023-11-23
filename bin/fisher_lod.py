@@ -12,7 +12,6 @@
 ##                                                                     ##
 ##     Gael A. Millot                                                  ##
 ##     Bioinformatics and Biostatistics Hub                            ##
-##     Computational Biology Department                                ##
 ##     Institut Pasteur Paris                                          ##
 ##                                                                     ##
 #########################################################################
@@ -87,6 +86,9 @@ fisher_report = sys.argv[7]
 # region=[‘chr7:0-147000000’, ‘chr10:1000000-2000000’]
 
 
+
+
+
 ################################ End Test
 
 ################################ Recording of the initial parameters
@@ -107,6 +109,7 @@ def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, c
     WARNINGS
     ARGUMENTS
         v: a single line of a vcf object from VCF()
+        status: dictionnary of the "aff" = 2 or "unaff" = 1 status of each indiv
         tsv_columns: column names of the final tsv file
         tsv_extra_fields_wo_csq: subfields of INFO field of the vcf to add as column in the tsv (excluding potential CSQ subfields like Polyphen)
         csq_subfield_name: subfields of the CSQ subfield of the INFO field of the vcf to add as column in the tsv
