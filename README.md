@@ -36,7 +36,7 @@
 <br /><br />
 ## WARNINGS
 
-The returned res.vcf is not a true VCF file as the results of the FORMAT field and corresponding patients data fields are not anymore present. Thus, this VCF file cannot be used by fisher_for_vcf as initial input.
+- The indiv counting (column *N* of the *res_fisher.tsv.gz* ouput file) is dependent on the read depth (DP) and genotype quality (GQ), according to the *filter_indiv_DP* and *filter_indiv_GQ* parameters in the *nextflow.config* file. Indiv with empty DP or "." value, or with empty GQ or "." value are also not counted.
 
 <br /><br />
 ## CONTENT
@@ -284,7 +284,9 @@ Not yet published
 
 The developers & maintainers of the mentioned softwares and packages, including:
 
-- [Slivar](https://github.com/brentp/slivar)
+- [cyvcf2](https://brentp.github.io/cyvcf2/docstrings.html)
+- [R](https://www.r-project.org/)
+- [ggplot2](https://ggplot2.tidyverse.org/)
 - [Nextflow](https://www.nextflow.io/)
 - [Apptainer](https://apptainer.org/)
 - [Docker](https://www.docker.com/)
@@ -292,9 +294,17 @@ The developers & maintainers of the mentioned softwares and packages, including:
 - [Bash](https://www.gnu.org/software/bash/)
 - [Ubuntu](https://ubuntu.com/)
 
+Special acknowledgement to [Brent Pedersen](https://github.com/brentp), Utrecht, The Netherlands, for the release of [cyvcf2](https://brentp.github.io/cyvcf2/docstrings.html).
+
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v4.0
+
+- rewritten completely.
+- Fisher test controled and ok.
+
 
 ### v3.0
 

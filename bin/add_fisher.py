@@ -3,7 +3,7 @@
 
 #########################################################################
 ##                                                                     ##
-##     fisher_lod.py                                                   ##
+##     add_fisher.py                                                   ##
 ##                                                                     ##
 ##     Freddy Cliquet                                                  ##
 ##     GHFC                                                            ##
@@ -26,6 +26,7 @@
 
 ################################ Introduction
 
+# https://brentp.github.io/cyvcf2/docstrings.html
 
 ################################ End Introduction
 
@@ -39,11 +40,14 @@
 ################################ Initialization
 
 
+
+
 import csv
 import sys
 import re
 import os.path
-from cyvcf2 import VCF, Writer
+# sys.path.append('/home/gmillot/anaconda3/lib/python3.11/site-packages') #additional package path added into PYTHONPATH
+from cyvcf2 import VCF
 import scipy.stats as stats
 import pandas as pd
 import numpy as np
@@ -67,11 +71,11 @@ from itertools import compress
 
 vcf_path = sys.argv[1]  # 1st argument: pedigree file name, 1 ID par ligne, sys.argv takes arguments from the bash line command when running a .py script
 ped_path = sys.argv[2]
-region = sys.argv[3]
-vcf_info_field_titles_path = sys.argv[4]
-tsv_extra_fields = sys.argv[5]
-vcf_csq_subfield_titles_path = sys.argv[6]
-fisher_report = sys.argv[7]
+vcf_info_field_titles_path = sys.argv[3]
+tsv_extra_fields = sys.argv[4]
+vcf_csq_subfield_titles_path = sys.argv[5]
+filter_indiv_DP = sys.argv[6]
+filter_indiv_GQ = sys.argv[7]
 
 
 ################################ End Config import
@@ -80,12 +84,19 @@ fisher_report = sys.argv[7]
 
 
 # vcf_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz"
-# vcf_path="/mnt/c/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz"
 # ped_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/Dyslexia.pedigree.txt" # functions for slivar
-# ped_path="/mnt/c/Users/gael/Documents/Git_projects/08002_bourgeron/dataset/Dyslexia.pedigree.txt"
-# region=[‘chr7:0-147000000’, ‘chr10:1000000-2000000’]
 
+# vcf_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/split_vcfac.vcf"
+# ped_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/Dyslexia.pedigree.txt"
+# vcf_info_field_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_info_field_titles.txt"
+# tsv_extra_fields =  "AC AF CSQ_SIFT CSQ_PolyPhen"
+# vcf_csq_subfield_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_csq_subfield_titles.txt"
 
+# vcf_path="C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/split_vcfac.vcf"
+# ped_path="C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/Dyslexia.pedigree.txt"
+# vcf_info_field_titles_path = "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_info_field_titles.txt"
+# tsv_extra_fields =  "AC AF CSQ_SIFT CSQ_PolyPhen"
+# vcf_csq_subfield_titles_path = "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_csq_subfield_titles.txt"
 
 
 
@@ -102,7 +113,7 @@ fisher_report = sys.argv[7]
 ################################ Functions
 
 
-def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfield_pos):
+def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfield_pos, filter_indiv_DP, filter_indiv_GQ):
     '''
     AIM
         compute fisher for a line of a vcf
@@ -154,7 +165,7 @@ csq_subfield_pos = [26]
             with warnings.catch_warnings():
                 # https://docs.python.org/3/library/warnings.html#warning-categories
                 warnings.filterwarnings("ignore", category=FutureWarning)
-                if dp not in ['.', ''] and int(dp)>=10 and gq not in ['.', ''] and float(gq)>=30:
+                if dp not in ['.', ''] and int(dp)>=filter_indiv_DP and gq not in ['.', ''] and float(gq)>=filter_indiv_DP:
                     # je met a jour le compte d'individus dans mes dictionnaire aff et una en fonction du phenotype de l'individu courant iid
                     if status[iid]==2: # 2 == status "aff" (result from ped)
                         aff[gt]=aff.get(gt,0)+1 # means if the key gt exists in the aff dict, return the value of aff[gt] + 1, otherwise return 0 + 1
@@ -163,7 +174,29 @@ csq_subfield_pos = [26]
                     an+=1
         # une fois que l'on a lu les information pour tous les individus, nous calculons le Fisher
         # ici c'est porteur (gt 1 ou 3) versus non porteur (gt 0) pour les atteints (aff) versus les non atteint (una)
-        oddsratio, pvalue = stats.fisher_exact([[aff.get(1,0)+aff.get(3,0),aff.get(0,0)],[una.get(1,0)+una.get(3,0),una.get(0,0)]], alternative='two-sided')
+        n_hom_ref_aff = aff.get(0,0)
+        n_het_aff = aff.get(1,0)
+        n_hom_alt_aff = aff.get(3,0)
+        n_hom_ref_unaff = una.get(0,0)
+        n_het_unaff = una.get(1,0)
+        n_hom_alt_unaff = una.get(3,0)
+        n11_carrier_model = n_het_aff+n_hom_alt_aff # nb of hetero and HOMO ALT in aff
+        n12_carrier_model = n_hom_ref_aff # nb of HOMO REF in aff
+        n21_carrier_model = n_het_unaff+n_hom_alt_unaff # nb of hetero and HOMO ALT in unaff 
+        n22_carrier_model = n_hom_ref_unaff # nb of HOMO REF in unaff
+        oddsratio_carrier_model, pvalue_carrier_model = stats.fisher_exact([[n11_carrier_model, n12_carrier_model],[n21_carrier_model, n22_carrier_model]], alternative='two-sided')
+
+        n11_hetero_model = n_het_aff # nb of hetero (expected geno) in aff
+        n12_hetero_model = n_hom_ref_aff+n_hom_alt_aff # nb of HOMO REF or ALT in aff
+        n21_hetero_model = n_het_unaff # nb of hetero (expected geno) in unaff 
+        n22_hetero_model = n_hom_ref_unaff+n_hom_alt_unaff # nb of HOMO REF or ALT in unaff
+        oddsratio_hetero_model, pvalue_hetero_model = stats.fisher_exact([[n11_hetero_model, n12_hetero_model],[n21_hetero_model, n22_hetero_model]], alternative='two-sided')
+
+        n11_recessive_model = n_hom_alt_aff # nb of HOMO ALT in aff
+        n12_recessive_model = n_hom_ref_aff+n_het_aff # nb of HOMO REF and hetero in aff
+        n21_recessive_model = n_hom_alt_unaff # nb of HOMO ALT in unaff
+        n22_recessive_model = n_hom_ref_unaff+n_het_unaff # nb of HOMO REF and hetero in unaff
+        oddsratio_recessive_model, pvalue_recessive_model = stats.fisher_exact([[n11_recessive_model, n12_recessive_model],[n21_recessive_model, n22_recessive_model]], alternative='two-sided')
 
         # filling a one row data frame with or without adding
         tempo_csq = v.INFO.get('CSQ').split(',') # number of fields in CSQ (comma sep), i.e., nb of rows
@@ -171,7 +204,7 @@ csq_subfield_pos = [26]
             gene = tempo_csq[0].split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
             consequence = tempo_csq[0].split('|')[1]
             impact = tempo_csq[0].split('|')[2]
-            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, impact, consequence, aff, una, oddsratio, pvalue, -np.log10(pvalue), an]], columns = tsv_columns)
+            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, impact, consequence, aff, una, n_hom_ref_aff, n_het_aff, n_hom_alt_aff, n_hom_ref_unaff, n_het_unaff, n_hom_alt_unaff, n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model), n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model), n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model), an]], columns = tsv_columns)
             if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
                 for i4 in tsv_extra_fields_wo_csq:
                     df2[i4] = v.INFO.get(i4)
@@ -238,7 +271,7 @@ csq_subfield_pos = [26]
             # f = open("test.txt", "a") ; f.write(str(list(range(0, len(subfield_pos)))))
             for i3 in list(range(0, len(subfield_pos))):
                 # f = open("test.txt", "a") ; f.write(str([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n' + str(impact) + '\n\n\n\n')
-                tempo = pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]], columns = tsv_columns)
+                tempo = pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, n_hom_ref_aff, n_het_aff, n_hom_alt_aff, n_hom_ref_unaff, n_het_unaff, n_hom_alt_unaff, n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model), n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model), n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model), an, subfield_pos[i3]]], columns = tsv_columns)
 
                 # f = open("test.txt", "a") ; f.write(str(csq_subfield_name) + '\n')
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT), column added to the data frame
@@ -270,25 +303,34 @@ csq_subfield_pos = [26]
 # end reserved words
 # argument primary checking
 if isinstance(vcf_path, str) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_path must be a single character string: \n"+" ".join(vcf_path)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the vcf_path must be a single character string: \n"+"".join(vcf_path)+"\n\n========\n\n")
 
 if isinstance(ped_path, str) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the ped_path must be a single character string: \n"+" ".join(ped_path)+"\n\n========\n\n")
-
-if isinstance(region, str) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the region must be a single character string: \n"+" ".join(region)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the ped_path must be a single character string: \n"+"".join(ped_path)+"\n\n========\n\n")
 
 if isinstance(vcf_info_field_titles_path, str) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_info_field_titles_path must be a single character string: \n"+" ".join(vcf_info_field_titles_path)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the vcf_info_field_titles_path must be a single character string: \n"+"".join(vcf_info_field_titles_path)+"\n\n========\n\n")
 
 if isinstance(tsv_extra_fields, str) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the tsv_extra_fields must be a single character string: \n"+" ".join(tsv_extra_fields)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the tsv_extra_fields must be a single character string: \n"+"".join(tsv_extra_fields)+"\n\n========\n\n")
+
+if isinstance(filter_indiv_DP, str) is not True:
+    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_DP must be a single character string made of a float number: \n"+"".join(filter_indiv_DP)+"\n\n========\n\n")
+elif not all(char.isdigit() or char == '.' for char in filter_indiv_DP): # if not isinstance(filter_indiv_DP, (float, int)) :
+    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_DP must be a single character string made of a float number: \n"+"".join(filter_indiv_DP)+"\nType: "+str(type(filter_indiv_DP))+"\n\n========\n\n")
+else:
+    filter_indiv_DP = float(filter_indiv_DP)
+
+if isinstance(filter_indiv_GQ, str) is not True:
+    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_GQ must be a single character string made of a float number: \n"+"".join(filter_indiv_GQ)+"\n\n========\n\n")
+elif not all(char.isdigit() or char == '.' for char in filter_indiv_GQ): # if not isinstance(filter_indiv_GQ, (float, int)) :
+    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_GQ must be a single character string made of a float number: \n"+"".join(filter_indiv_GQ)+"\nType: "+str(type(filter_indiv_GQ))+"\n\n========\n\n")
+else:
+    filter_indiv_GQ = float(filter_indiv_GQ)
 
 if isinstance(vcf_csq_subfield_titles_path, str) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_csq_subfield_titles_path must be a single character string: \n"+" ".join(vcf_csq_subfield_titles_path)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the vcf_csq_subfield_titles_path must be a single character string: \n"+"".join(vcf_csq_subfield_titles_path)+"\n\n========\n\n")
 
-if isinstance(fisher_report, str) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the fisher_report must be a single character string: \n"+" ".join(fisher_report)+"\n\n========\n\n")
 # end argument primary checking
 # second round of checking and data preparation
 # management of NA arguments
@@ -303,18 +345,18 @@ random.seed(1)
 # end warning initiation
 # other checkings
 if os.path.exists(vcf_path) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_path file does not exist: \n"+" ".join(vcf_path)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the vcf_path file does not exist: \n"+"".join(vcf_path)+"\n\n========\n\n")
 
 if os.path.exists(ped_path) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the ped_path file does not exist: \n"+" ".join(ped_path)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the ped_path file does not exist: \n"+"".join(ped_path)+"\n\n========\n\n")
 
 if os.path.exists(vcf_info_field_titles_path) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_info_field_titles_path file does not exist: \n"+" ".join(vcf_info_field_titles_path)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the vcf_info_field_titles_path file does not exist: \n"+"".join(vcf_info_field_titles_path)+"\n\n========\n\n")
 
 tsv_extra_fields = tsv_extra_fields.split(' ')
 
 if os.path.exists(vcf_csq_subfield_titles_path) is not True:
-    sys.exit("\n\n========\n\nError in fisher_lod.py: the vcf_csq_subfield_titles_path file does not exist: \n"+" ".join(vcf_csq_subfield_titles_path)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the vcf_csq_subfield_titles_path file does not exist: \n"+"".join(vcf_csq_subfield_titles_path)+"\n\n========\n\n")
 # end other checkings
 # reserved word checking
 # end reserved word checking
@@ -331,11 +373,6 @@ if os.path.exists(vcf_csq_subfield_titles_path) is not True:
 
 ################ Ignition
 
-# if region == "None":
-#    region = None
-#else:
-#    # region = region.strip('[]').replace('"', '').replace(' ', '').split(',') # old version when no parall in nf
-#    region = region.replace('"', '').replace(' ', '')
 
 ################ End ignition
 
@@ -366,7 +403,7 @@ vcf = VCF(vcf_path) # import the VCF as it is. But this tool as the advantage to
 #     w = Writer('./vcf.tsv', vcf) # https://brentp.github.io/cyvcf2/docstrings.html
 #     w.write_record(v)
 #     w.close()
-# the INFO field of the VCF isis a complex object
+# the INFO field of the VCF is a complex object
 
 
 with open(vcf_info_field_titles_path, 'r') as f:
@@ -381,14 +418,14 @@ with open(vcf_csq_subfield_titles_path, 'r') as f:
 ############ modifications of imported tables
 
 # checking that everything is fine with tsv_extra_fields, and info recovering
-tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE_EXAMPLE','IMPACT_EXAMPLE','CONSEQUENCE_EXAMPLE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB'] #warning : can be replaced below
+tsv_columns=['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE_EXAMPLE', 'IMPACT_EXAMPLE', 'CONSEQUENCE_EXAMPLE', 'AFF', 'UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF', 'N11_CARRIER_MODEL', 'N12_CARRIER_MODEL', 'N21_CARRIER_MODEL', 'N22_CARRIER_MODEL', 'OR_CARRIER_MODEL', 'P_VALUE_CARRIER_MODEL', 'NEG_LOG10_P_VALUE_CARRIER_MODEL', 'N11_HETERO_MODEL', 'N12_HETERO_MODEL', 'N21_HETERO_MODEL', 'N22_HETERO_MODEL', 'OR_HETERO_MODEL', 'P_VALUE_HETERO_MODEL', 'NEG_LOG10_P_VALUE_HETERO_MODEL', 'N11_RECESS_MODEL', 'N12_RECESS_MODEL', 'N21_RECESS_MODEL', 'N22_RECESS_MODEL', 'OR_RECESS_MODEL', 'P_VALUE_RECESS_MODEL', 'NEG_LOG10_P_VALUE_RECESS_MODEL', 'PATIENT_NB'] #warning : can be replaced below
 csq_subfield_name = []
 csq_subfield_pos = []
 tsv_extra_fields_wo_csq = []
 if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
     tempo_log = [bool(re.search("^CSQ_.*$", i1)) for i1 in tsv_extra_fields] # is there any CSQ_ ?
     if any(i1 for i1 in tempo_log) is True:
-        tsv_columns=['CHROM','POS','REF','ALT', 'INFO', 'GENE','IMPACT','CONSEQUENCE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
+        tsv_columns=['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE', 'IMPACT', 'CONSEQUENCE', 'AFF', 'UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF', 'N11_CARRIER_MODEL', 'N12_CARRIER_MODEL', 'N21_CARRIER_MODEL', 'N22_CARRIER_MODEL', 'OR_CARRIER_MODEL', 'P_VALUE_CARRIER_MODEL', 'NEG_LOG10_P_VALUE_CARRIER_MODEL', 'N11_HETERO_MODEL', 'N12_HETERO_MODEL', 'N21_HETERO_MODEL', 'N22_HETERO_MODEL', 'OR_HETERO_MODEL', 'P_VALUE_HETERO_MODEL', 'NEG_LOG10_P_VALUE_HETERO_MODEL', 'N11_RECESS_MODEL', 'N12_RECESS_MODEL', 'N21_RECESS_MODEL', 'N22_RECESS_MODEL', 'OR_RECESS_MODEL', 'P_VALUE_RECESS_MODEL', 'NEG_LOG10_P_VALUE_RECESS_MODEL', 'PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
         tempo_pos = []
         for i2 in list(range(0, len(tsv_extra_fields))):
             if bool(re.search("^CSQ_.*$", tsv_extra_fields[i2])) is True:
@@ -398,7 +435,7 @@ if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
                 tempo_pos.append(i2)
 
         if all([i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]) is not True:
-            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+" ".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+" ".join(vcf_csq_subfield_titles)+"\nThe wrong fields are:\n"+" ".join(compress(vcf_csq_subfield_titles, [ not i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]))+"\n\n========\n\n")
+            sys.exit("\n\n========\n\nError in add_fisher.py: some of the CSQ subfield of the tsv_extra_fields parameter (starting by CSQ_): \n"+"".join(csq_subfield_name)+"\nare not in the vcf_csq_subfield_titles parameter: \n"+"".join(vcf_csq_subfield_titles)+"\nThe wrong fields are:\n"+"".join(compress(vcf_csq_subfield_titles, [ not i1 in vcf_csq_subfield_titles for i1 in csq_subfield_name]))+"\n\n========\n\n")
         else:
             for i2 in csq_subfield_name:
                 for i3 in list(range(0, len(vcf_csq_subfield_titles))):
@@ -407,16 +444,13 @@ if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
 
         tsv_extra_fields_wo_csq = [tsv_extra_fields[i1] for i1 in tempo_pos]
         if all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]) is not True:
-            sys.exit("\n\n========\n\nError in fisher_lod.py: not considering CSQ_, some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields_wo_csq)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\nThe wrong fields are:\n"+" ".join(compress(vcf_info_field_titles, [ not i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]))+"\n\n========\n\n")
+            sys.exit("\n\n========\n\nError in add_fisher.py: not considering CSQ_, some of the tsv_extra_fields parameter values: \n"+"".join(tsv_extra_fields_wo_csq)+"\nare not in the vcf_info_field_titles parameter: \n"+"".join(vcf_info_field_titles)+"\nThe wrong fields are:\n"+"".join(compress(vcf_info_field_titles, [ not i1 in vcf_info_field_titles for i1 in tsv_extra_fields_wo_csq]))+"\n\n========\n\n")
 
     elif all([i1 in vcf_info_field_titles for i1 in tsv_extra_fields]) is not True:
-            sys.exit("\n\n========\n\nError in fisher_lod.py: some of the tsv_extra_fields parameter values: \n"+" ".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+" ".join(vcf_info_field_titles)+"\nThe wrong fields are:\n"+" ".join(compress(vcf_info_field_titles, [ not i1 in vcf_info_field_titles for i1 in tsv_extra_fields]))+"\n\n========\n\n")
+            sys.exit("\n\n========\n\nError in add_fisher.py: some of the tsv_extra_fields parameter values: \n"+"".join(tsv_extra_fields)+"\nare not in the vcf_info_field_titles parameter: \n"+"".join(vcf_info_field_titles)+"\nThe wrong fields are:\n"+"".join(compress(vcf_info_field_titles, [ not i1 in vcf_info_field_titles for i1 in tsv_extra_fields]))+"\n\n========\n\n")
 
     else:
         tsv_extra_fields_wo_csq = tsv_extra_fields
-
-
-
 
 df = pd.DataFrame(columns = tsv_columns + csq_subfield_name + tsv_extra_fields_wo_csq)
 with warnings.catch_warnings():
@@ -431,19 +465,9 @@ with warnings.catch_warnings():
 #            for v in vcf(i1):
 #                tempo = fisher(v = v, columns = columns)
 #                df = df.append(tempo)
-    LOG_EVERY_N = 1000
-    count = 0
-    report = open(fisher_report, "a")
     for v in vcf: # parse each line of vcf with the content of region in it
-        count = count + 1
-        if v.CHROM == region:
-            tempo = fisher(v = v, status = status, tsv_columns = tsv_columns, tsv_extra_fields_wo_csq = tsv_extra_fields_wo_csq, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos)
-            df = df.append(tempo)
-
-        if (count % LOG_EVERY_N) == 0:
-            report.write("NUMBER OF VCF LINES SCANNED: " + str(count) + "\n")
-
-    report.close()
+        tempo = fisher(v = v, status = status, tsv_columns = tsv_columns, tsv_extra_fields_wo_csq = tsv_extra_fields_wo_csq, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos, filter_indiv_DP = filter_indiv_DP, filter_indiv_GQ = filter_indiv_GQ)
+        df = df.append(tempo)
 
 # on ecrit la dataframe dans un fichier
 df.to_csv('./fisher.tsv', sep='\t', index=False)
@@ -466,6 +490,7 @@ df.to_csv('./fisher.tsv', sep='\t', index=False)
 
 
 ################ Seeding inactivation
+
 random.seed()
 
 ################ end Seeding inactivation

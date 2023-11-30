@@ -210,6 +210,7 @@ for(i in 1:length(req.package.list)){suppressMessages(library(req.package.list[i
 
 ################ other functions
 
+
 vcf.info.fields <- function(path){
     # AIM
     # scan a vcf file header and return the subfields of the INFO field (i.e., everything that starts by "##INFO=<ID=" in the vcf header)
@@ -231,20 +232,24 @@ vcf.info.fields <- function(path){
     while(goon == TRUE){
         count <- count + 1
         tempo <- scan(path, what = "list", sep = '\n', skip = count, nlines = 1, quiet = TRUE)
-        if(grepl(tempo, pattern = "^##INFO=<ID=.*")){
-            tempo.right <- sub(x = tempo, pattern = "^##INFO=<ID=", replacement = "")
-            tempo.left <- sub(x = tempo.right, pattern = ",.*$", replacement = "")
-            info.subfield.name <- c(info.subfield.name, tempo.left)
-        }
-        if( ! grepl(tempo, pattern = "^#.*")){ # because a vcf always starts by #
-            goon <- FALSE
-            if(is.null(info.subfield.name)){
-                stop(paste0("\n\n============\n\nERROR IN the vcf.csq.subfields function of vcf_subfield_title.R\nNO \"##INFO=<ID=\" DESCRIPTION FOUND IN THE HEADER OF:\n", path, "\n\n============\n\n"), call. = FALSE)
+        if(length(tempo) > 0){ # == 0 means has reach the end of the file
+            if(grepl(tempo, pattern = "^##INFO=<ID=.*")){
+                tempo.right <- sub(x = tempo, pattern = "^##INFO=<ID=", replacement = "")
+                tempo.left <- sub(x = tempo.right, pattern = ",.*$", replacement = "")
+                info.subfield.name <- c(info.subfield.name, tempo.left)
             }
+            if( ! grepl(tempo, pattern = "^#.*")){ # means that has reach the variants info (the vcf contains variants lines after the header made of #)
+                goon <- FALSE
+            }
+        }else{
+            goon <- FALSE
         }
         # add special split for CSQ
     }
-    # add check with bottom.y.column
+    if(is.null(info.subfield.name)){
+        stop(paste0("\n\n============\n\nERROR IN the vcf.info.fields function of vcf_header.R\nNO \"##INFO=<ID=\" DESCRIPTION FOUND IN THE HEADER OF:\n", path, "\n\n============\n\n"), call. = FALSE)
+    }
+    # I must add a check with bottom.y.column
     return(info.subfield.name)
 }
 
@@ -260,7 +265,7 @@ vcf.csq.subfields <- function(path){
     # REQUIRED FUNCTIONS FROM CUTE_LITTLE_R_FUNCTION
     # none
     # EXAMPLES
-    # vcf.info.fields("C:\\Users\\gael\\Documents\\Git_projects\\fisher_for_vcf\\dataset\\Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf")
+    # vcf.csq.subfields("C:\\Users\\gael\\Documents\\Git_projects\\fisher_for_vcf\\dataset\\Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf")
     # DEBUGGING
     # path = "C:\\Users\\gael\\Documents\\Git_projects\\fisher_for_vcf\\dataset\\Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf" # for function debugging
     goon <- TRUE
@@ -269,20 +274,24 @@ vcf.csq.subfields <- function(path){
     while(goon == TRUE){
         count <- count + 1
         tempo <- scan(path, what = "list", sep = '\n', skip = count, nlines = 1, quiet = TRUE)
-        if(grepl(tempo, pattern = "^##INFO=<ID=CSQ.*")){
-            tempo.right <- sub(x = tempo, pattern = "^##INFO=<ID=.*Format: ", replacement = "")
-            tempo.left <- sub(x = tempo.right, pattern ='">$', replacement = "")
-            info.subfield.name <- unlist(strsplit(tempo.left, split = "\\|"))
-        }
-        if( ! grepl(tempo, pattern = "^#.*")){ # because a vcf always starts by #
-            goon <- FALSE
-            if(is.null(info.subfield.name)){
-                stop(paste0("\n\n============\n\nERROR IN the vcf.csq.subfields function of vcf_subfield_title.R\nNO \"##INFO=<ID=CSQ\" DESCRIPTION FOUND IN THE HEADER OF:\n", path, "\n\n============\n\n"), call. = FALSE)
+        if(length(tempo) > 0){ # == 0 means has reach the end of the file
+            if(grepl(tempo, pattern = "^##INFO=<ID=CSQ.*")){
+                tempo.right <- sub(x = tempo, pattern = "^##INFO=<ID=.*Format: ", replacement = "")
+                tempo.left <- sub(x = tempo.right, pattern ='">$', replacement = "")
+                info.subfield.name <- unlist(strsplit(tempo.left, split = "\\|"))
             }
+            if( ! grepl(tempo, pattern = "^#.*")){ # means that has reach the variants info (the vcf contains variants lines after the header made of #)
+                goon <- FALSE
+            }
+        }else{
+            goon <- FALSE
         }
         # add special split for CSQ
     }
-    # add check with bottom.y.column
+    if(is.null(info.subfield.name)){
+        stop(paste0("\n\n============\n\nERROR IN the vcf.csq.subfields function of vcf_header.R\nNO \"##INFO=<ID=\" DESCRIPTION FOUND IN THE HEADER OF:\n", path, "\n\n============\n\n"), call. = FALSE)
+    }
+    # I must add a check with bottom.y.column
     return(info.subfield.name)
 }
 
@@ -325,10 +334,6 @@ if(any(tempo.log) == TRUE){# normally no NA with is.null()
 # code that protects set.seed() in the global environment
 # end code that protects set.seed() in the global environment
 # warning initiation
-ini.warning.length <- options()$warning.length
-options(warning.length = 8170)
-warn <- NULL
-# warn.count <- 0 # not required
 # end warning initiation
 # other checkings
 # end other checkings
@@ -346,16 +351,6 @@ if( ! file.exists(vcf)){
 ################################ End pre-ignition checking
 
 
-################################ Main code
-
-res1 <- vcf.info.fields(vcf)
-res2 <- vcf.csq.subfields(vcf)
-cat(res1, file= "./vcf_info_field_titles.txt", append = FALSE, sep =" ") # add a sep
-cat(res2, file= "./vcf_csq_subfield_titles.txt", append = FALSE, sep =" ") # add a sep
-
-
-################################ end Main code
-
 
 ################ Ignition
 
@@ -371,18 +366,18 @@ fun_report(data = paste0("\n\n################################ RUNNING\n\n"), ou
 ################ End ignition
 
 
-############ main
+################################ Main code
+
+res1 <- vcf.info.fields(vcf)
+res2 <- vcf.csq.subfields(vcf)
+cat(res1, file= "./vcf_info_field_titles.txt", append = FALSE, sep =" ") # add a sep
+cat(res2, file= "./vcf_csq_subfield_titles.txt", append = FALSE, sep =" ") # add a sep
 
 
-
-
-############ end main
+################################ end Main code
 
 
 ################ Seeding inactivation
-
-
-set.seed(NULL)
 
 
 ################ end Seeding inactivation
@@ -404,14 +399,6 @@ fun_report(data = paste0("\n\nALL DATA SAVED IN all_objects.RData"), output = lo
 
 
 ################ Warning messages
-
-
-fun_report(data = paste0("\n\n################################ RECAPITULATION OF WARNING MESSAGES"), output = log, path = "./", overwrite = FALSE)
-if( ! is.null(warn)){
-    fun_report(data = paste0("\n\n", warn), output = log, path = "./", overwrite = FALSE)
-}else{
-    fun_report(data = paste0("\n\nNO WARNING MESSAGE TO REPORT"), output = log, path = "./", overwrite = FALSE)
-}
 
 
 ################ end Warning messages

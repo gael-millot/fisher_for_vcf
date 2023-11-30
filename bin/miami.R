@@ -115,11 +115,11 @@ rm(tempo.cat)
 
 ################################ Test
 
-# fisher <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/fisher.tsv"
-# chr.path <- "C:/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
+# fisher <- "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/fisher.tsv"
+# chr.path <- "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/hg19_grch37p5_chr_size_cumul.txt"
 # x.lim <- "chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19, chr20, chr21, chr22, chr23, chr24, chr25, chrY, chrX, chrM" ### "chr1:0-50000, chr3:0-150000"
 # vgrid <- "TRUE"
-# top.y.column <- "NEG_LOG10_P_VALUE"
+# top.y.column <- "NEG_LOG10_P_VALUE_CARRIER_MODEL"
 # bottom.y.column <- "AF"
 # color.column <- "NULL"
 # dot.border.color <- "white"
@@ -133,6 +133,8 @@ rm(tempo.cat)
 # y.log2 <- "FALSE"
 # cute <- "https://gitlab.pasteur.fr/gmillot/cute_little_R_functions/-/raw/v11.4.0/cute_little_R_functions.R" 
 # log <- "miami_report.txt"
+
+
 
 
 ################################ end Test
@@ -583,6 +585,17 @@ for(i0 in c("y.threshold1", "y.threshold2")){
         }
     }
 }
+
+if( ! top.y.column %in% names(obs)){
+    tempo.cat <- paste0("ERROR IN miami.R:\nTHE top.y.column PARAMETER MUST BE A COLUMN NAME OF THE FISHER TABLE.\n\ntop.y.column PARAMETER:\n", paste0(top.y.column, collapse = " "), "\n\nCOLUMN NAMES:\n", paste0(names(obs), collapse = "\n"))
+    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+}
+if( ! bottom.y.column %in% names(obs)){
+    tempo.cat <- paste0("ERROR IN miami.R:\nTHE bottom.y.column PARAMETER MUST BE A COLUMN NAME OF THE FISHER TABLE.\n\nbottom.y.column PARAMETER:\n", paste0(bottom.y.column, collapse = " "), "\n\nCOLUMN NAMES:\n", paste0(names(obs), collapse = "\n"))
+    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+}
+
+
 
 ############ end modifications of imported tables
 
