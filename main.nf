@@ -61,11 +61,12 @@ process header {
     path tbi
 
     output:
-    path "vcf_header.txt", emit: vcf_header_ch
+    path "header.txt", emit: header_ch
+    path "header_report.txt"
 
     script:
     """
-    bcftools head ${vcf} > vcf_header.txt | tee extract_report.txt
+    bcftools head ${vcf} > header.txt | tee header_report.txt
     """
 }
 
@@ -77,7 +78,7 @@ process vcf_info {
     cache 'true'
 
     input:
-    path vcf_header // no parall
+    path header // no parall
     path cute
 
     output:
@@ -88,7 +89,7 @@ process vcf_info {
     script:
     """
     #!/bin/bash -ue
-    vcf_header.R ${vcf_header} "${cute}" "vcf_info_report.txt"
+    vcf_header.R ${header} "${cute}" "vcf_info_report.txt"
     """
 }
 
@@ -104,18 +105,19 @@ process extract {
     val region
 
     output:
-    path "extracted.vcf", emit: extracted_vcf_ch
-    path "extracted.vcf.tbi", emit: extracted_tbi_ch
+    path "extracted.vcf.gz", emit: extracted_vcf_ch
+    path "extracted.vcf.gz.tbi", emit: extracted_tbi_ch
+    path "extract_report.txt"
 
     script:
     """
     #!/bin/bash -ue
-    AVAIL_THREADS=\$(grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print \$4}')
     if [[ "${region}" == "none" ]] ; then
-        ln -s ${vcf} "extracted.vcf" | tee extract_report.txt # warning can still be zipped
-        ln -s ${tbi} "extracted.vcf.tbi" # tbi always exists (as NULL if no compression)
+        ln -s ${vcf} "extracted.vcf.gz" | tee extract_report.txt
+        ln -s ${tbi} "extracted.vcf.gz.tbi" | tee -a extract_report.txt
     else
-        bcftools filter --regions ${region} --write-index ${vcf} --output extracted.vcf | tee extract_report.txt
+        bcftools filter --regions ${region} ${vcf} | pigz > extracted.vcf.gz | tee extract_report.txt
+        tabix -p vcf extracted.vcf.gz | tee -a extract_report.txt
     fi
     """
     // bcftools view --no-header --threads \${AVAIL_THREADS} --write-index --output-type z --output extracted.vcf.zip ${vcf} | tee extract_report.txt # --write-index cannot be used if \${vcf} is output of slivar
@@ -130,39 +132,36 @@ process vcf_split {
 
     input:
     path vcf // no parall
+    path tbi
     val thread_nb
 
     output:
-    path "split_vcf*", emit: split_vcf_ch // parallel
+    path "split_*.vcf.gz", emit: split_vcf_ch // parallel if thread_nb != "NULL
     path "vcf_split_report.txt"
 
     script:
     """
     #!/bin/bash -ue
-    if [[ "${thread_nb}" == "NULL" ]] ; then
-        ln -s ${vcf} "split_vcf" | tee vcf_split_report.txt
-        ln -s ${tbi} "split_vcf.tbi" # tbi always exists (as NULL if no compression)
-    else
-        TOTAL_LINE_NB=\$(bcftools query -l ${vcf} | wc -l)
-        echo -e "TOTAL LINE NUMBER IN FILE: \${TOTAL_LINE_NB}\\n\\n" > vcf_split_report.txt
-        LINE_NB=\$(( (\$TOTAL_LINE_NB+(${thread_nb}-1))/${thread_nb} ))
-        echo -e "NB OF FILES REQUIRED BY THE USER (thread_nb PARAMETER OF THE nextflow.config FILE) : ${thread_nb}\\n\\n" >> vcf_split_report.txt
-        echo -e "LINE NUMBER PER FILE (AROUND): \${LINE_NB}\\n\\n" >> vcf_split_report.txt
-        zcat ${vcf} | split --lines=\$LINE_NB --additional-suffix ".vcf" - "split_vcf" | tee -a vcf_split_report.txt 
-        # --number=l/\${thread_nb} splits the files in \${thread_nb} files for parral without cutting inside lines (it is L, not one). The hyphen is for the piped file. --number=l/${thread_nb} does not work when using pipe because split needs to know the line number before splitting, which is not possible with pipe. See https://www.gnu.org/software/coreutils/manual/html_node/split-invocation.html#split-invocation
-        # --filter='pigz' --additional-suffix ".vcf.gz" to rezip the file, --filter='pigz' is faster than --filter='gzip'
-    fi
+    TOTAL_LINE_NB=\$(bcftools view --no-header ${vcf} | wc -l) # warning: bcftools query -l ${vcf} | wc -l counts the number of patients
+    echo -e "TOTAL LINE NUMBER IN FILE: \${TOTAL_LINE_NB}\\n\\n" > vcf_split_report.txt
+    LINE_NB=\$(( (\$TOTAL_LINE_NB+(${thread_nb}-1))/${thread_nb} ))
+    echo -e "NB OF FILES REQUIRED BY THE USER (thread_nb PARAMETER OF THE nextflow.config FILE) : ${thread_nb}\\n\\n" >> vcf_split_report.txt
+    echo -e "LINE NUMBER PER FILE (AROUND): \${LINE_NB}\\n\\n" >> vcf_split_report.txt
+    bcftools view --no-header ${vcf} | split --lines=\$LINE_NB --filter='bgzip > \$FILE.vcf.gz' - "split_" | tee -a vcf_split_report.txt # pigz does not work here : no more splitting
+    echo "" > split_vcf.gz.tbi # trick to have one tbi channel. Indexing will be done later because multi vcf files here, which is harder to channelize
     """
+    // --number=l/\${thread_nb} splits the files in \${thread_nb} files for parral without cutting inside lines (it is L, not one). The hyphen is for the piped file. --number=l/${thread_nb} does not work when using pipe because split needs to know the line number before splitting, which is not possible with pipe. See https://www.gnu.org/software/coreutils/manual/html_node/split-invocation.html#split-invocation
+    // --filter='pigz' --additional-suffix ".vcf.gz" to rezip the file, --filter='pigz' is faster than --filter='gzip'
 }
 
 
 process fisher {
     label 'python' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}/reports", mode: 'copy', pattern: "{fisher_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     cache 'true'
 
     input:
     path vcf // parallelization expected
+    path tbi
     path header
     path ped
     path vcf_info_field_titles
@@ -174,7 +173,7 @@ process fisher {
 
     output:
     path "*.tsv", emit: fisher_ch1 // multi channel
-    path "*.txt"
+    path "fisher_report.txt", emit: fisher_report_ch // multi channel
 
     script:
     """
@@ -183,24 +182,27 @@ process fisher {
         echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nTHE VCF FILE HAS ALREADY FISHER COMPUTATION PERFORMED, AS FIELDS ARE:\\n\$(cat ${vcf_info_field_titles})\\n\\n========\\n\\n"
         exit 1
     fi
-    if [[ "${thread_nb}" == "NULL" ]] ; then
-        echo -e "BEFORE: \$(zcat ${vcf} | wc -l)\\n"
-        add_fisher.py ${vcf} ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} | tee fisher_report.txt
-        echo -e "AFTER: \$(cat fisher.tsv | wc -l)\\n"
-    else
-        echo -e "BEFORE: \$(cat ${vcf} | wc -l)\\n"
-        cat ${header} ${vcf} > ./TEMPO.txt # assembling header and each chunk of vcf, as required by VCF tool
-        add_fisher.py ./TEMPO.txt ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} | tee fisher_report.txt
-        echo -e "AFTER: \$(cat fisher.tsv | wc -l)\\n"
+    if [[ "${thread_nb}" == "NULL" ]] ; then # unsplitted file (is .gz and has his tbi and has header)
+        echo -e "NB OF LINES OF VARIANTS IN THE VCF: \$(zcat ${vcf} | wc -l)\\n" >> fisher_report.txt
+        add_fisher.py ${vcf} ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} | tee -a fisher_report.txt
+        echo -e "NB OF LINES OF VARIANTS IN THE TSV: \$(( \$(cat fisher.tsv | wc -l) - 1 ))\\n" >> fisher_report.txt
+    else # split file: .gz but without header and without .tbi 
+        echo -e "\\n######## IN: ${vcf}\\n" >> fisher_report.txt
+        echo -e "NB OF LINES OF VARIANTS IN THE SPLIT VCF: \$(zcat ${vcf} | wc -l)\\n" >> fisher_report.txt
+        bgzip ${header} # pigz does not work here. Does not like symlink
+        cat ${header}.gz ${vcf} > ./TEMPO.gz # assembling .gz header and .gz vcf, as required by VCF tool
+        tabix -p vcf ./TEMPO.gz | tee -a fisher_report.txt
+        add_fisher.py ./TEMPO.gz ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} | tee -a fisher_report.txt
+        echo -e "NB OF LINES OF VARIANTS IN THE TSV: \$(( \$(cat fisher.tsv | wc -l) - 1 ))\\n" >> fisher_report.txt
     fi
     """
 }
 
 
-
 process tsv_compress {
     label 'bash' // see the withLabel: bash in the nextflow config file 
-    publishDir path: "${out_path}", mode: 'copy', overwrite: false
+    publishDir path: "${out_path}", mode: 'copy', pattern: "{res_fisher.tsv.gz}",overwrite: false
+    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{fisher_report.txt}",overwrite: false
     cache 'true'
 
     //no channel input here for the vcf, because I do not transform it
@@ -209,11 +211,13 @@ process tsv_compress {
     // see the scope for the use of affected_patients which is already a variable from .config file
 
     output:
-    path "res_fisher.*"
+    path "res_fisher.tsv.gz"
+    path "fisher_report.txt"
 
     script:
     """
     #!/bin/bash -ue
+    echo -e "NB OF LINES OF VARIANTS IN THE TSV: \$(( \$(cat ${tsv} | wc -l) - 1 ))\\n" >> fisher_report.txt
     gzip -cf9 ${tsv} > res_fisher.tsv.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
     """
     // write ${} between "" to make a single argument when the variable is made of several values separated by a space. Otherwise, several arguments will be considered
@@ -310,7 +314,7 @@ workflow {
     //////// Variables
 
     modules = params.modules // remove the dot -> can be used in bash scripts
-    config_file = file("${projectDir}/nextflow.config") // file() create a path object necessary o then create the file
+    config_file = workflow.configFiles[0] // better to use this than config_file = file("${projectDir}/nextflow.config") because the latter is not good if -c option of nextflow run is used // file() create a path object necessary o then create the file
     log_file = file("${launchDir}/.nextflow.log")
 
     // from parameters (options of the nexflow command line)
@@ -327,14 +331,12 @@ workflow {
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN repertoire_profiler.config FILE:\n${sample_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
     }else if( ! (file(sample_path).exists()) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }else if(sample_path =~ /.*\.gz$/){
-        if( ! (file("${sample_path}.tbi").exists()) ){
-            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
-        }else{
-            tbi_file = file("${sample_path}.tbi")
-        }
+    }else if( ! sample_path =~ /.*\.gz$/){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .gz VCF FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\n\n========\n\n"
+    }else if( ! (file("${sample_path}.tbi").exists()) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
     }else{
-        tbi_file = file("NULL")
+        tbi_file = file("${sample_path}.tbi")
     }
     if( ! (ped_path.class == String) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN repertoire_profiler.config FILE:\n${ped_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
@@ -503,7 +505,7 @@ workflow {
     )
 
     vcf_info(
-        header.out.vcf_header_ch,
+        header.out.header_ch,
         cute_file
     )
 
@@ -517,23 +519,27 @@ workflow {
         extracted_tbi_ch2 = extract.out.extracted_tbi_ch
     }else{
         extracted_vcf_ch2 = vcf_ch
+        extracted_tbi_ch2 = tbi_file
     }
 
-extracted_vcf_ch2.view()
 
     if(thread_nb != "NULL"){
         vcf_split(
             extracted_vcf_ch2,
+            extracted_tbi_ch2,
             thread_nb
         )
-        split_ch = vcf_split.out.split_vcf_ch.flatten() // to convert the list into multiple channels
+        split_vcf_ch2 = vcf_split.out.split_vcf_ch.flatten() // to convert the list into multiple channels
+        split_tbi_ch2 = file("NULL")
     }else{
-        split_ch = extracted_vcf_ch2
+        split_vcf_ch2 = extracted_vcf_ch2
+        split_tbi_ch2 = extracted_tbi_ch2
     }
 
     fisher(
-        split_ch, 
-        header.out.vcf_header_ch.first(), 
+        split_vcf_ch2, 
+        split_tbi_ch2, 
+        header.out.header_ch.first(), 
         ped_file,
         vcf_info.out.vcf_info_field_titles_ch.first(),
         vcf_info.out.vcf_csq_subfield_titles_ch.first(),
@@ -544,6 +550,7 @@ extracted_vcf_ch2.view()
     )
 
     fisher_ch2 = fisher.out.fisher_ch1.collectFile(name: "fisher.tsv", keepHeader: true, skip: 1)
+    fisher.out.fisher_report_ch.collectFile(name: "fisher_report.txt").subscribe{it -> it.copyTo("${out_path}/reports")}
 
     tsv_compress(
         fisher_ch2

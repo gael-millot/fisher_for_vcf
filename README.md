@@ -303,7 +303,7 @@ Special acknowledgement to [Brent Pedersen](https://github.com/brentp), Utrecht,
 ### v4.0
 
 - rewritten completely.
-- Fisher test controled and ok.
+- Fisher test checked and ok.
 
 
 ### v3.0
