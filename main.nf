@@ -124,6 +124,27 @@ process extract {
     // | bcftools view --no-header --threads \${AVAIL_THREADS} --write-index --output-type z --output extracted.vcf.zip - | tee extract_report.txt # --write-index cannot be used if \${vcf} is output of slivar
 }
 
+process vcf_variant_nb {
+    label 'bcftools' // see the withLabel: bash in the nextflow config file
+    publishDir "${out_path}/reports", mode: 'copy', pattern: "{vcf_variant_nb_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    cache 'true'
+
+    input:
+    path vcf // no parall
+    path tbi // no parall
+
+    output:
+    stdout
+    path "vcf_variant_nb_report.txt"
+
+    script:
+    """
+    #!/bin/bash -ue
+    TOTAL_LINE_NB=\$(bcftools view --no-header ${vcf} | wc -l) # warning: bcftools query -l ${vcf} | wc -l counts the number of patients
+    echo -e "TOTAL LINE NUMBER OF VARIANTS IN THE VCF FILE: \${TOTAL_LINE_NB}\\n\\n" > vcf_variant_nb_report.txt
+    echo \${TOTAL_LINE_NB} # into the stdout
+    """
+}
 
 process vcf_split {
     label 'bcftools' // see the withLabel: bash in the nextflow config file
@@ -133,6 +154,7 @@ process vcf_split {
     input:
     path vcf // no parall
     path tbi
+    val total_line_nb
     val thread_nb
 
     output:
@@ -142,9 +164,7 @@ process vcf_split {
     script:
     """
     #!/bin/bash -ue
-    TOTAL_LINE_NB=\$(bcftools view --no-header ${vcf} | wc -l) # warning: bcftools query -l ${vcf} | wc -l counts the number of patients
-    echo -e "TOTAL LINE NUMBER IN FILE: \${TOTAL_LINE_NB}\\n\\n" > vcf_split_report.txt
-    LINE_NB=\$(( (\$TOTAL_LINE_NB+(${thread_nb}-1))/${thread_nb} ))
+    LINE_NB=\$(( (${total_line_nb}+(${thread_nb}-1))/${thread_nb} ))
     echo -e "NB OF FILES REQUIRED BY THE USER (thread_nb PARAMETER OF THE nextflow.config FILE) : ${thread_nb}\\n\\n" >> vcf_split_report.txt
     echo -e "LINE NUMBER PER FILE (AROUND): \${LINE_NB}\\n\\n" >> vcf_split_report.txt
     bcftools view --no-header ${vcf} | split --lines=\$LINE_NB --filter='bgzip > \$FILE.vcf.gz' - "split_" | tee -a vcf_split_report.txt # pigz does not work here : no more splitting
@@ -199,10 +219,29 @@ process fisher {
 }
 
 
+process tsv_variant_nb {
+    label 'bash' // see the withLabel: bash in the nextflow config file 
+    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{tsv_variant_nb.txt}",overwrite: false
+    cache 'true'
+
+    //no channel input here for the vcf, because I do not transform it
+    input:
+    path tsv
+    // see the scope for the use of affected_patients which is already a variable from .config file
+
+    output:
+    path "tsv_variant_nb.txt"
+
+    script:
+    """
+    #!/bin/bash -ue
+    echo -e "NB OF LINES OF VARIANTS IN THE TSV: \$(( \$(cat ${tsv} | wc -l) - 1 ))\\n" >> tsv_variant_nb.txt
+    """
+}
+
 process tsv_compress {
     label 'bash' // see the withLabel: bash in the nextflow config file 
     publishDir path: "${out_path}", mode: 'copy', pattern: "{res_fisher.tsv.gz}",overwrite: false
-    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{fisher_report.txt}",overwrite: false
     cache 'true'
 
     //no channel input here for the vcf, because I do not transform it
@@ -212,15 +251,12 @@ process tsv_compress {
 
     output:
     path "res_fisher.tsv.gz"
-    path "fisher_report.txt"
 
     script:
     """
     #!/bin/bash -ue
-    echo -e "NB OF LINES OF VARIANTS IN THE TSV: \$(( \$(cat ${tsv} | wc -l) - 1 ))\\n" >> fisher_report.txt
     gzip -cf9 ${tsv} > res_fisher.tsv.gz # htslib command, -l 9 best compression, -c to standard output, -f to force without asking
     """
-    // write ${} between "" to make a single argument when the variable is made of several values separated by a space. Otherwise, several arguments will be considered
 }
 
 // bcftools annotate if we want the fisher inside a vcf
@@ -228,7 +264,7 @@ process tsv_compress {
 
 
 
-process miami_plot {
+process miami {
     label 'r_ext' // see the withLabel: bash in the nextflow config file 
     publishDir "${out_path}", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     publishDir "${out_path}/reports", mode: 'copy', pattern: "{miami_report.txt}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
@@ -522,11 +558,16 @@ workflow {
         extracted_tbi_ch2 = tbi_file
     }
 
+    vcf_variant_nb(
+        extracted_vcf_ch2,
+        extracted_tbi_ch2
+    )
 
     if(thread_nb != "NULL"){
         vcf_split(
             extracted_vcf_ch2,
             extracted_tbi_ch2,
+            vcf_variant_nb.out[0], // stdout of vcf_variant_nb = nb of lines of the vcf
             thread_nb
         )
         split_vcf_ch2 = vcf_split.out.split_vcf_ch.flatten() // to convert the list into multiple channels
@@ -552,12 +593,16 @@ workflow {
     fisher_ch2 = fisher.out.fisher_ch1.collectFile(name: "fisher.tsv", keepHeader: true, skip: 1)
     fisher.out.fisher_report_ch.collectFile(name: "fisher_report.txt").subscribe{it -> it.copyTo("${out_path}/reports")}
 
+    tsv_variant_nb(
+        fisher_ch2
+    )
+
     tsv_compress(
         fisher_ch2
     )
 
     if(miami_plot == "TRUE"){
-        miami_plot(
+        miami(
             fisher_ch2,
             chr_file,
             x_lim_val,

@@ -83,17 +83,17 @@ filter_indiv_GQ = sys.argv[7]
 ################################ Test
 
 
-# vcf_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz"
-# ped_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/Dyslexia.pedigree.txt" # functions for slivar
+# vcf_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/example.vcf.gz"
+# ped_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/pedigree.txt" # functions for slivar
 
 # vcf_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/split_vcfac.vcf"
-# ped_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/Dyslexia.pedigree.txt"
+# ped_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/pedigree.txt"
 # vcf_info_field_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_info_field_titles.txt"
 # tsv_extra_fields =  "AC AF CSQ_SIFT CSQ_PolyPhen"
 # vcf_csq_subfield_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_csq_subfield_titles.txt"
 
 # vcf_path="C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/split_vcfac.vcf"
-# ped_path="C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/Dyslexia.pedigree.txt"
+# ped_path="C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/pedigree.txt"
 # vcf_info_field_titles_path = "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_info_field_titles.txt"
 # tsv_extra_fields =  "AC AF CSQ_SIFT CSQ_PolyPhen"
 # vcf_csq_subfield_titles_path = "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_csq_subfield_titles.txt"
@@ -134,11 +134,11 @@ def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, c
             fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
     DEBUGGING
         # use the container: sudo docker run -ti --entrypoint bash -v /mnt/c/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset:/tmp gmillot/python_v3.9.10_extended_v3.1:gitlab_v8.7)
-vcf = VCF("/tmp/Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10.vcf")
+vcf = VCF("/tmp/example.vcf.gz")
 count = 1 
 for v in vcf:
     if count == 1: break
-status = {'C0011JY': 1, 'C0011JZ': 2, 'C0011K1': 1, 'C0011K2': 2, 'C0011K3': 2, 'C0011K5': 1, 'C0011KA': 2, 'C0011KB': 1, 'IP00FNP': 2, 'IP00FNW': 2, 'IP00FNY': 2}
+status = {'P1': 1, 'P2': 2, 'P3': 1, 'P4': 2, 'P5': 2, 'P6': 1, 'P7': 2, 'P8': 1, 'P9': 2, 'P10': 2, 'P11': 2}
 tsv_columns = ['CHROM','POS','REF','ALT', 'INFO', 'GENE','IMPACT','CONSEQUENCE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
 tsv_extra_fields_wo_csq = ['AC', 'AF']
 csq_subfield_name = ['PolyPhen']
@@ -180,23 +180,32 @@ csq_subfield_pos = [26]
         n_hom_ref_unaff = una.get(0,0)
         n_het_unaff = una.get(1,0)
         n_hom_alt_unaff = una.get(3,0)
-        n11_carrier_model = n_het_aff+n_hom_alt_aff # nb of hetero and HOMO ALT in aff
-        n12_carrier_model = n_hom_ref_aff # nb of HOMO REF in aff
-        n21_carrier_model = n_het_unaff+n_hom_alt_unaff # nb of hetero and HOMO ALT in unaff 
-        n22_carrier_model = n_hom_ref_unaff # nb of HOMO REF in unaff
-        oddsratio_carrier_model, pvalue_carrier_model = stats.fisher_exact([[n11_carrier_model, n12_carrier_model],[n21_carrier_model, n22_carrier_model]], alternative='two-sided')
+        n_aff = n_hom_ref_aff + n_het_aff + n_hom_alt_aff
+        n_unaff = n_hom_ref_unaff + n_het_unaff + n_hom_alt_unaff
+        
+        # aff, una, n_hom_ref_aff, n_het_aff, n_hom_alt_aff, n_hom_ref_unaff, n_het_unaff, n_hom_alt_unaff, n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model), n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model), n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model), an
+        tempo_list = []
+        if bool(re.search("carrier", model)) is True: 
+            n11_carrier_model = n_het_aff+n_hom_alt_aff # nb of hetero and HOMO ALT in aff
+            n12_carrier_model = n_hom_ref_aff # nb of HOMO REF in aff
+            n21_carrier_model = n_het_unaff+n_hom_alt_unaff # nb of hetero and HOMO ALT in unaff 
+            n22_carrier_model = n_hom_ref_unaff # nb of HOMO REF in unaff
+            oddsratio_carrier_model, pvalue_carrier_model = stats.fisher_exact([[n11_carrier_model, n12_carrier_model],[n21_carrier_model, n22_carrier_model]], alternative='two-sided')
+            tempo_list.extend([n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model)])
 
-        n11_hetero_model = n_het_aff # nb of hetero (expected geno) in aff
-        n12_hetero_model = n_hom_ref_aff+n_hom_alt_aff # nb of HOMO REF or ALT in aff
-        n21_hetero_model = n_het_unaff # nb of hetero (expected geno) in unaff 
-        n22_hetero_model = n_hom_ref_unaff+n_hom_alt_unaff # nb of HOMO REF or ALT in unaff
-        oddsratio_hetero_model, pvalue_hetero_model = stats.fisher_exact([[n11_hetero_model, n12_hetero_model],[n21_hetero_model, n22_hetero_model]], alternative='two-sided')
+        if bool(re.search("strict_heterozygous", model)) is True: 
+            n11_hetero_model = n_het_aff # nb of hetero (expected geno) in aff
+            n12_hetero_model = n_hom_ref_aff+n_hom_alt_aff # nb of HOMO REF or ALT in aff
+            n21_hetero_model = n_het_unaff # nb of hetero (expected geno) in unaff 
+            n22_hetero_model = n_hom_ref_unaff+n_hom_alt_unaff # nb of HOMO REF or ALT in unaff
+            oddsratio_hetero_model, pvalue_hetero_model = stats.fisher_exact([[n11_hetero_model, n12_hetero_model],[n21_hetero_model, n22_hetero_model]], alternative='two-sided')
 
-        n11_recessive_model = n_hom_alt_aff # nb of HOMO ALT in aff
-        n12_recessive_model = n_hom_ref_aff+n_het_aff # nb of HOMO REF and hetero in aff
-        n21_recessive_model = n_hom_alt_unaff # nb of HOMO ALT in unaff
-        n22_recessive_model = n_hom_ref_unaff+n_het_unaff # nb of HOMO REF and hetero in unaff
-        oddsratio_recessive_model, pvalue_recessive_model = stats.fisher_exact([[n11_recessive_model, n12_recessive_model],[n21_recessive_model, n22_recessive_model]], alternative='two-sided')
+        if bool(re.search("recessive", model)) is True: 
+            n11_recessive_model = n_hom_alt_aff # nb of HOMO ALT in aff
+            n12_recessive_model = n_hom_ref_aff+n_het_aff # nb of HOMO REF and hetero in aff
+            n21_recessive_model = n_hom_alt_unaff # nb of HOMO ALT in unaff
+            n22_recessive_model = n_hom_ref_unaff+n_het_unaff # nb of HOMO REF and hetero in unaff
+            oddsratio_recessive_model, pvalue_recessive_model = stats.fisher_exact([[n11_recessive_model, n12_recessive_model],[n21_recessive_model, n22_recessive_model]], alternative='two-sided')
 
         # filling a one row data frame with or without adding
         tempo_csq = v.INFO.get('CSQ').split(',') # number of fields in CSQ (comma sep), i.e., nb of rows
@@ -418,14 +427,23 @@ with open(vcf_csq_subfield_titles_path, 'r') as f:
 ############ modifications of imported tables
 
 # checking that everything is fine with tsv_extra_fields, and info recovering
-tsv_columns=['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE_EXAMPLE', 'IMPACT_EXAMPLE', 'CONSEQUENCE_EXAMPLE', 'AFF', 'UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF', 'N11_CARRIER_MODEL', 'N12_CARRIER_MODEL', 'N21_CARRIER_MODEL', 'N22_CARRIER_MODEL', 'OR_CARRIER_MODEL', 'P_VALUE_CARRIER_MODEL', 'NEG_LOG10_P_VALUE_CARRIER_MODEL', 'N11_HETERO_MODEL', 'N12_HETERO_MODEL', 'N21_HETERO_MODEL', 'N22_HETERO_MODEL', 'OR_HETERO_MODEL', 'P_VALUE_HETERO_MODEL', 'NEG_LOG10_P_VALUE_HETERO_MODEL', 'N11_RECESS_MODEL', 'N12_RECESS_MODEL', 'N21_RECESS_MODEL', 'N22_RECESS_MODEL', 'OR_RECESS_MODEL', 'P_VALUE_RECESS_MODEL', 'NEG_LOG10_P_VALUE_RECESS_MODEL', 'PATIENT_NB'] #warning : can be replaced below
+tsv_columns = ['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE', 'IMPACT', 'CONSEQUENCE', 'PATIENT_NB', 'N_AFF', 'N_UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF'] #warning : can be replaced below
+if bool(re.search("carrier", model)) is True: 
+    tsv_columns = tsv_columns + ['N11_CARRIER_MODEL', 'N12_CARRIER_MODEL', 'N21_CARRIER_MODEL', 'N22_CARRIER_MODEL', 'OR_CARRIER_MODEL', 'P_VALUE_CARRIER_MODEL', 'NEG_LOG10_P_VALUE_CARRIER_MODEL']
+
+if bool(re.search("strict_heterozygous", model)) is True: 
+    tsv_columns = tsv_columns + ['N11_HETERO_MODEL', 'N12_HETERO_MODEL', 'N21_HETERO_MODEL', 'N22_HETERO_MODEL', 'OR_HETERO_MODEL', 'P_VALUE_HETERO_MODEL', 'NEG_LOG10_P_VALUE_HETERO_MODEL'] 
+
+if bool(re.search("recessive", model)) is True: 
+    tsv_columns = tsv_columns + ['N11_RECESS_MODEL', 'N12_RECESS_MODEL', 'N21_RECESS_MODEL', 'N22_RECESS_MODEL', 'OR_RECESS_MODEL', 'P_VALUE_RECESS_MODEL', 'NEG_LOG10_P_VALUE_RECESS_MODEL']
+
 csq_subfield_name = []
 csq_subfield_pos = []
 tsv_extra_fields_wo_csq = []
 if all([i0 == 'NULL' for i0 in tsv_extra_fields]) is False:
     tempo_log = [bool(re.search("^CSQ_.*$", i1)) for i1 in tsv_extra_fields] # is there any CSQ_ ?
     if any(i1 for i1 in tempo_log) is True:
-        tsv_columns=['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE', 'IMPACT', 'CONSEQUENCE', 'AFF', 'UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF', 'N11_CARRIER_MODEL', 'N12_CARRIER_MODEL', 'N21_CARRIER_MODEL', 'N22_CARRIER_MODEL', 'OR_CARRIER_MODEL', 'P_VALUE_CARRIER_MODEL', 'NEG_LOG10_P_VALUE_CARRIER_MODEL', 'N11_HETERO_MODEL', 'N12_HETERO_MODEL', 'N21_HETERO_MODEL', 'N22_HETERO_MODEL', 'OR_HETERO_MODEL', 'P_VALUE_HETERO_MODEL', 'NEG_LOG10_P_VALUE_HETERO_MODEL', 'N11_RECESS_MODEL', 'N12_RECESS_MODEL', 'N21_RECESS_MODEL', 'N22_RECESS_MODEL', 'OR_RECESS_MODEL', 'P_VALUE_RECESS_MODEL', 'NEG_LOG10_P_VALUE_RECESS_MODEL', 'PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
+        tsv_columns = tsv_columns + ['CSQ_TRANSCRIPT_NB']
         tempo_pos = []
         for i2 in list(range(0, len(tsv_extra_fields))):
             if bool(re.search("^CSQ_.*$", tsv_extra_fields[i2])) is True:

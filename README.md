@@ -1,3 +1,4 @@
+
 [//]: # "#to make links in gitlab: example with racon https://github.com/isovic/racon"
 [//]: # "tricks in markdown: https://openclassrooms.com/fr/courses/1304236-redigez-en-markdown"
 
@@ -27,8 +28,8 @@
 ## AIM
 
 
-- Compute the two-sided Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases.
-- Odds ratio used is (n11/n12)/(n21/n22) = (n11\*n22)/(n12\*n21) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff (carrier in aff)<br /></li><li>n12 = nHOM_REF_aff (non-carrier in aff)<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff (carrier in unaff)<br /></li><li>n22 = nHOM_REF_unaff (non-carrier in unaff)<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff
+- Compute the two-sided Fisher exact test statistics (score) and p values from a vcf annotated file made of patient and control cases, according to three different models:  "carrier", "strict heterozygous", "recessive".
+- Odds ratio used is $$OR = \frac{n_{11} / n_{12}}{n_{21} / n_{22}} = \frac{n_{11} * n_{22}}{n_{12} * n_{21}}$$ with:<br /><ul><li>carrier model:<ul><li>Carrier in aff: $n_{11} = n_{hetero/aff} + n_{homo\ alt/aff}$<li/>Non-carrier in aff: $n_{12} = n_{homo\ ref/aff}$<li/>Carrier in unaff: $n_{21} = n_{hetero/unaff} + n_{homo\ alt/unaff}$<li/>Non-carrier in unaff: $n_{22} = n_{homo\ ref/unaff}$<li/>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff</ul><li>strict heterozygous model:<ul><li>Hetero in aff: $n_{11} = n_{hetero/aff}$<li/>Non-heteo in aff: $n_{12} = n_{homo\ ref/aff}  + n_{homo\ alt/aff}$<li/>Hetero in unaff: $n_{21} = n_{hetero/unaff}$<li/>Non-hetero in unaff: $n_{22} = n_{homo\ ref/unaff} + n_{homo\ alt/unaff}$<li/>OR > 1 meaning OR in favor of HET/aff versus HET/unaff</ul><li>recessive model:<ul><li>Recessive in aff: $n_{11} = n_{homo\ alt/aff}$<li/>Non-recessive in aff: $n_{12} = n_{homo\ ref/aff} + n_{hetero/aff}$<li/>Recessive in unaff: $n_{21} = n_{homo\ alt/unaff}$<li/>Non-recessive in unaff: $n_{22} = n_{homo\ ref/unaff} + n_{hetero/unaff}$<li/>OR > 1 meaning OR in favor of HOM_ALT/aff versus HOM_ALT/unaff</ul></ul><br />
 - Return a res.tsv file and a Miami plot.
 - The tsv file can include fields and sub-fields of the vcf file in different columns. See the tsv_extra_fields parameter of the nextflow.config file, as well as the OUTPUT section below.
 - Return also a res.vcf file made from the res.tsv file, mimicing a VCF file, i.e., with the inital header of the .vcf and with the fisher results added in the INFO section.
@@ -64,8 +65,9 @@ The dataset used in the *nextflow.config* file, as example, is available at http
 
 | Dataset folder | Description |
 | --- | --- |
-| **Dyslexia.gatk-vqsr.splitted.norm.vep.merged_first_10000.vcf.gz** | VCF file. |
-| **Dyslexia.pedigree.txt** | Pedigree file. |
+| **example.vcf.gz** | VCF file compressed using `bgzip <vcf_name>`. |
+| **example.vcf.gz.tbi** | Index file associated to the VCF file, obtained using `tabix <vcf_name>.gz`. |
+| **pedigree.txt** | Pedigree file. |
 | **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot |
 
 
@@ -75,7 +77,7 @@ The dataset used in the *nextflow.config* file, as example, is available at http
 ### 1. Prerequisite
 
 Installation of:<br />
-[nextflow DSL1](https://github.com/nextflow-io/nextflow)<br />
+[nextflow DSL2](https://github.com/nextflow-io/nextflow)<br />
 [Graphviz](https://www.graphviz.org/download/), `sudo apt install graphviz` for Linux ubuntu<br />
 [Apptainer](https://github.com/apptainer/apptainer)<br />
 
@@ -87,11 +89,11 @@ Installation of:<br />
 
 - Mount a server if required:
 
-<pre>
+```
 DRIVE="Z" # change the letter to fit the correct drive
 sudo mkdir /mnt/share
 sudo mount -t drvfs $DRIVE: /mnt/share
-</pre>
+```
 
 Warning: if no mounting, it is possible that nextflow does nothing, or displays a message like:
 <pre>
@@ -101,9 +103,9 @@ Launching `main.nf` [loving_morse] - revision: d5aabe528b
 
 - Run the following command from where the *main.nf* and *nextflow.config* files are (example: \\wsl$\Ubuntu-20.04\home\gael):
 
-<pre>
+```
 nextflow run main.nf -c nextflow.config
-</pre>
+```
 
 with -c to specify the name of the config file used.
 
@@ -112,9 +114,9 @@ with -c to specify the name of the config file used.
 
 Run the following command from where you want the results:
 
-<pre>
+```
 nextflow run -hub pasteur gmillot/fisher_for_vcf -r v1.0.0
-</pre>
+```
 
 <br /><br />
 ### 3. Distant running (example with the Pasteur cluster)
@@ -123,7 +125,7 @@ nextflow run -hub pasteur gmillot/fisher_for_vcf -r v1.0.0
 
 Copy-paste this after having modified the EXEC_PATH variable:
 
-<pre>
+```
 EXEC_PATH="/pasteur/zeus/projets/p01/BioIT/gmillot/fisher_for_vcf" # where the bin folder of the main.nf script is located
 export CONF_BEFORE=/opt/gensoft/exe # on maestro
 
@@ -140,28 +142,28 @@ MODULES="${CONF_BEFORE}/${JAVA_CONF}/${JAVA_CONF_AFTER},${CONF_BEFORE}/${APP_CON
 cd ${EXEC_PATH}
 chmod 755 ${EXEC_PATH}/bin/*.* # not required if no bin folder
 module load ${JAVA_CONF} ${APP_CONF} ${GIT_CONF} ${GRAPHVIZ_CONF}
-</pre>
+```
 
 <br /><br />
 #### 3.2. *main.nf* file in a cluster folder
 
 Modify the second line of the code below, and run from where the *main.nf* and *nextflow.config* files are (which has been set thanks to the EXEC_PATH variable above):
 
-<pre>
+```
 HOME_INI=$HOME
 HOME="${ZEUSHOME}/fisher_for_vcf/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/, for instance. See NFX_HOME in the nextflow software script
 trap '' SIGINT
 nextflow run --modules ${MODULES} main.nf -c nextflow.config
 HOME=$HOME_INI
 trap SIGINT
-</pre>
+```
 
 <br /><br />
 #### 3.3. *main.nf* file in the public gitlab repository
 
 Modify the first and third lines of the code below, and run (results will be where the EXEC_PATH variable has been set above):
 
-<pre>
+```
 VERSION="v1.0"
 HOME_INI=$HOME
 HOME="${ZEUSHOME}/fisher_for_vcf/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/, for instance. See NFX_HOME in the nextflow software script
@@ -169,33 +171,32 @@ trap '' SIGINT
 nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config
 HOME=$HOME_INI
 trap SIGINT
-</pre>
+```
 
 <br /><br />
 ### 4. Error messages and solutions
 
 #### Message 1
-```
-Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
-```
-
-Purge using:
 <pre>
-rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
+Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
 </pre>
 
+Purge using:
+```
+rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
+```
+
 #### Message 2
-```
+<pre>
 WARN: Cannot read project manifest -- Cause: Remote resource not found: https://gitlab.pasteur.fr/api/v4/projects/gmillot%2Ffisher_for_vcf
-```
+</pre>
 
 Contact Gael Millot (distant repository is not public).
 
 #### Message 3
-
-```
+<pre>
 permission denied
-```
+</pre>
 
 Use chmod to change the user rights. Example linked to files in the bin folder: 
 ```
@@ -237,9 +238,13 @@ An example of results obtained with the dataset is present at this address: http
 | **IMPACT** | severity of the ALT consequence (IMPACT field of the CSQ field (VEP) of INFO field of the VCF) |
 | **AFF** | Count of the number of 0=HOM_REF ; 1=HET ; 2=UNKNOWN ; 3=HOM_ALT in the affected cases. Example: {0:4, 1:2} for 4 cases HOM_REF and 2 cases HET |
 | **UNAFF** | as in *aff* in the unaffected cases |
-| **OR** | Odds ratio (n11/n12)/(n21/n22) = (n11\*n22)/(n12\*n21) with:<br /><ul><li>n11 = nHET_aff + nHOM_ALT_aff (carrier in aff)<br /></li><li>n12 = nHOM_REF_aff (non-carrier in aff)<br /></li><li>n21 = nHET_unaff + nHOM_ALT_unaff (carrier in unaff)<br /></li><li>n22 = nHOM_REF_unaff (non-carrier in unaff)<br /></li>OR > 1 meaning OR in favor of HET+HOM_ALT/aff versus HET+HOM_ALT/unaff |
-| **P_VALUE** | p-value of the exact two-sided Fisher test |
-| **NEG_LOG10_P_VALUE** | -log10 of the p-value |
+| **N_HOM_REF_AFF** | number of homozygous reference (HOM_REF) in the affected cases |
+| **N_HET_AFF** | number of heterozygous (HET) in the affected cases |
+| **N_HOM_ALT_AFF** | number of homozygous alternative (HOM_ALT) in the affected cases |
+| **N_HOM_REF_UNAFF** | number of homozygous reference (HOM_REF) in the unaffected cases |
+| **N_HET_UNAFF** | number of heterozygous (HET) in the unaffected cases |
+| **N_HOM_ALT_UNAFF** | number of homozygous alternative (HOM_ALT) in the unaffected cases |
+| 7 columns per model selected, as described in the [aim](#AIM) section:<ul><li>**CARRIER_MODEL**<li>**HETERO_MODEL**<li>**RECESS_MODEL**</li> | <ul><li>$n_{11}$<li>$n_{12}$<li>$n_{21}$<li>$n_{22}$<li>$OR$<li>$P\ value$<li>$-log_{10}(P\ value)$</li> |
 | **PATIENT_NB** | Number of AFF and UNAFF used for the fisher data |
 | Optional colums | |
 | **CSQ_TRANSCRIPT_NB** | number of fieds in the CSQ field (comma separated). Present only if "CSQ" is present in the tsv_extra_fields parameter |
@@ -253,7 +258,7 @@ An example of results obtained with the dataset is present at this address: http
 ## VERSIONS
 
 
-The different releases are tagged [here](https://gitlab.pasteur.fr/gmillot/fisher_for_vcf/-/tags)
+The different releases are tagged [here](https://github.com/gael-millot/fisher_for_vcf/tags)
 
 <br /><br />
 ## LICENCE
@@ -276,7 +281,7 @@ Not yet published
 
 [Freddy Cliquet](https://gitlab.pasteur.fr/fcliquet), GHFC, Institut Pasteur, Paris, France
 
-[Gael A. Millot](https://gitlab.pasteur.fr/gmillot), Hub, Institut Pasteur, Paris, France
+[Gael A. Millot](https://github.com/gael-millot), Hub, Institut Pasteur, Paris, France
 
 <br /><br />
 ## ACKNOWLEDGEMENTS
@@ -299,6 +304,12 @@ Special acknowledgement to [Brent Pedersen](https://github.com/brentp), Utrecht,
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v5.0
+
+- github transfert
+- New model parameter added (carrier|strict_heterozygous|recessive) for OR computation
+
 
 ### v4.0
 
@@ -396,7 +407,5 @@ Miami plot improvement
 ### v1.0
 
 everything
-
-
 
 
