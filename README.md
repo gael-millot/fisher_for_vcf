@@ -247,7 +247,7 @@ An example of results obtained with the dataset is present at this address: http
 | 7 columns per model selected, as described in the [aim](#AIM) section:<ul><li>**CARRIER_MODEL**<li>**HETERO_MODEL**<li>**RECESS_MODEL**</li> | <ul><li>$n_{11}$<li>$n_{12}$<li>$n_{21}$<li>$n_{22}$<li>$OR$<li>$P\ value$<li>$-log_{10}(P\ value)$</li> |
 | **PATIENT_NB** | Number of AFF and UNAFF used for the fisher data |
 | Optional colums | |
-| **CSQ_TRANSCRIPT_NB** | number of fieds in the CSQ field (comma separated). Present only if "CSQ" is present in the tsv_extra_fields parameter |
+| **CSQ_TRANSCRIPT_NB** | number of fields in the CSQ field (comma separated). Present only if "CSQ" is present in the tsv_extra_fields parameter |
 | ***\<NAME\>*** | name of the fields of INFO field of the vcf or subfield of CSQ, as indicated in the tsv_extra_fields parameter |
 
 <br /><br />

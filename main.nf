@@ -190,6 +190,7 @@ process fisher {
     val filter_indiv_DP
     val filter_indiv_GQ
     val thread_nb
+    val model
 
     output:
     path "*.tsv", emit: fisher_ch1 // multi channel
@@ -204,7 +205,7 @@ process fisher {
     fi
     if [[ "${thread_nb}" == "NULL" ]] ; then # unsplitted file (is .gz and has his tbi and has header)
         echo -e "NB OF LINES OF VARIANTS IN THE VCF: \$(zcat ${vcf} | wc -l)\\n" >> fisher_report.txt
-        add_fisher.py ${vcf} ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} | tee -a fisher_report.txt
+        add_fisher.py ${vcf} ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} "${model}" | tee -a fisher_report.txt
         echo -e "NB OF LINES OF VARIANTS IN THE TSV: \$(( \$(cat fisher.tsv | wc -l) - 1 ))\\n" >> fisher_report.txt
     else # split file: .gz but without header and without .tbi 
         echo -e "\\n######## IN: ${vcf}\\n" >> fisher_report.txt
@@ -212,7 +213,7 @@ process fisher {
         bgzip ${header} # pigz does not work here. Does not like symlink
         cat ${header}.gz ${vcf} > ./TEMPO.gz # assembling .gz header and .gz vcf, as required by VCF tool
         tabix -p vcf ./TEMPO.gz | tee -a fisher_report.txt
-        add_fisher.py ./TEMPO.gz ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} | tee -a fisher_report.txt
+        add_fisher.py ./TEMPO.gz ${ped} ${vcf_info_field_titles} "${tsv_extra_fields}" ${vcf_csq_subfield_titles} ${filter_indiv_DP} ${filter_indiv_GQ} "${model}" | tee -a fisher_report.txt
         echo -e "NB OF LINES OF VARIANTS IN THE TSV: \$(( \$(cat fisher.tsv | wc -l) - 1 ))\\n" >> fisher_report.txt
     fi
     """
@@ -386,6 +387,11 @@ workflow {
     }
     if( ! region.class == String ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID region PARAMETER IN nextflow.config FILE:\n${region}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }
+    if( ! model.class == String ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID model PARAMETER IN nextflow.config FILE:\n${model}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+    }else if( ! (model =~ /^(carrier)|(strict_heterozygous)|(recessive)|(carrier|strict_heterozygous)|(carrier|recessive)|(strict_heterozygous|recessive)|(carrier|strict_heterozygous|recessive)$/)){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID model PARAMETER IN nextflow.config FILE:\n${model}\nMUST BE HAS EXPLAINED IN THE nextflow.config FILE\n\n========\n\n"
     }
     if( ! tsv_extra_fields.class == String ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID tsv_extra_fields PARAMETER IN nextflow.config FILE:\n${tsv_extra_fields}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
@@ -587,7 +593,8 @@ workflow {
         tsv_extra_fields, 
         filter_indiv_DP, 
         filter_indiv_GQ, 
-        thread_nb
+        thread_nb,
+        model
     )
 
     fisher_ch2 = fisher.out.fisher_ch1.collectFile(name: "fisher.tsv", keepHeader: true, skip: 1)

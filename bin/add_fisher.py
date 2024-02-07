@@ -76,6 +76,7 @@ tsv_extra_fields = sys.argv[4]
 vcf_csq_subfield_titles_path = sys.argv[5]
 filter_indiv_DP = sys.argv[6]
 filter_indiv_GQ = sys.argv[7]
+model = sys.argv[8]
 
 
 ################################ End Config import
@@ -83,21 +84,14 @@ filter_indiv_GQ = sys.argv[7]
 ################################ Test
 
 
-# vcf_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/example.vcf.gz"
-# ped_path="/pasteur/zeus/projets/p01/BioIT/gmillot/08002_bourgeron/dataset/pedigree.txt" # functions for slivar
-
-# vcf_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/split_vcfac.vcf"
-# ped_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/pedigree.txt"
-# vcf_info_field_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_info_field_titles.txt"
+# vcf_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/other/res.vcf.gz"
+# ped_path="/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/other/pedigree.txt"
+# vcf_info_field_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/other/vcf_info_field_titles.txt"
 # tsv_extra_fields =  "AC AF CSQ_SIFT CSQ_PolyPhen"
-# vcf_csq_subfield_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_csq_subfield_titles.txt"
-
-# vcf_path="C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/split_vcfac.vcf"
-# ped_path="C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/pedigree.txt"
-# vcf_info_field_titles_path = "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_info_field_titles.txt"
-# tsv_extra_fields =  "AC AF CSQ_SIFT CSQ_PolyPhen"
-# vcf_csq_subfield_titles_path = "C:/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/vcf_csq_subfield_titles.txt"
-
+# vcf_csq_subfield_titles_path = "/mnt/c/Users/gmillot/Documents/Git_projects/fisher_for_vcf/dataset/other/vcf_csq_subfield_titles.txt"
+# filter_indiv_DP = "30"
+# filter_indiv_GQ = "10"
+# model = 'carrier|strict_heterozygous'
 
 
 ################################ End Test
@@ -113,7 +107,7 @@ filter_indiv_GQ = sys.argv[7]
 ################################ Functions
 
 
-def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfield_pos, filter_indiv_DP, filter_indiv_GQ):
+def fisher(v, status, model, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, csq_subfield_pos, filter_indiv_DP, filter_indiv_GQ):
     '''
     AIM
         compute fisher for a line of a vcf
@@ -121,6 +115,7 @@ def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, c
     ARGUMENTS
         v: a single line of a vcf object from VCF()
         status: dictionnary of the "aff" = 2 or "unaff" = 1 status of each indiv
+        model: the model string in the config 
         tsv_columns: column names of the final tsv file
         tsv_extra_fields_wo_csq: subfields of INFO field of the vcf to add as column in the tsv (excluding potential CSQ subfields like Polyphen)
         csq_subfield_name: subfields of the CSQ subfield of the INFO field of the vcf to add as column in the tsv
@@ -134,15 +129,18 @@ def fisher(v, status, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_name, c
             fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
     DEBUGGING
         # use the container: sudo docker run -ti --entrypoint bash -v /mnt/c/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset:/tmp gmillot/python_v3.9.10_extended_v3.1:gitlab_v8.7)
-vcf = VCF("/tmp/example.vcf.gz")
+vcf = VCF("res.vcf.gz")
 count = 1 
 for v in vcf:
     if count == 1: break
 status = {'P1': 1, 'P2': 2, 'P3': 1, 'P4': 2, 'P5': 2, 'P6': 1, 'P7': 2, 'P8': 1, 'P9': 2, 'P10': 2, 'P11': 2}
-tsv_columns = ['CHROM','POS','REF','ALT', 'INFO', 'GENE','IMPACT','CONSEQUENCE','AFF','UNAFF','OR','P_VALUE','NEG_LOG10_P_VALUE','PATIENT_NB', 'CSQ_TRANSCRIPT_NB']
+model = 'carrier|strict_heterozygous'
+tsv_columns = ['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE', 'IMPACT', 'CONSEQUENCE', 'PATIENT_NB', 'AFF', 'UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF', 'N11_CARRIER_MODEL', 'N12_CARRIER_MODEL', 'N21_CARRIER_MODEL', 'N22_CARRIER_MODEL', 'OR_CARRIER_MODEL', 'P_VALUE_CARRIER_MODEL', 'NEG_LOG10_P_VALUE_CARRIER_MODEL', 'N11_HETERO_MODEL', 'N12_HETERO_MODEL', 'N21_HETERO_MODEL', 'N22_HETERO_MODEL', 'OR_HETERO_MODEL', 'P_VALUE_HETERO_MODEL', 'NEG_LOG10_P_VALUE_HETERO_MODEL', 'CSQ_TRANSCRIPT_NB']
 tsv_extra_fields_wo_csq = ['AC', 'AF']
-csq_subfield_name = ['PolyPhen']
-csq_subfield_pos = [26]
+csq_subfield_name = ['SIFT', 'PolyPhen']
+csq_subfield_pos = [25, 26]
+filter_indiv_DP = 30.0
+filter_indiv_GQ = 10.0
     '''
     
     # je fais 2 dictionnaire pour stocker mes compte d'atteint/non atteint porteurs/non porteurs
@@ -199,6 +197,7 @@ csq_subfield_pos = [26]
             n21_hetero_model = n_het_unaff # nb of hetero (expected geno) in unaff 
             n22_hetero_model = n_hom_ref_unaff+n_hom_alt_unaff # nb of HOMO REF or ALT in unaff
             oddsratio_hetero_model, pvalue_hetero_model = stats.fisher_exact([[n11_hetero_model, n12_hetero_model],[n21_hetero_model, n22_hetero_model]], alternative='two-sided')
+            tempo_list.extend([n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model)])
 
         if bool(re.search("recessive", model)) is True: 
             n11_recessive_model = n_hom_alt_aff # nb of HOMO ALT in aff
@@ -206,6 +205,7 @@ csq_subfield_pos = [26]
             n21_recessive_model = n_hom_alt_unaff # nb of HOMO ALT in unaff
             n22_recessive_model = n_hom_ref_unaff+n_het_unaff # nb of HOMO REF and hetero in unaff
             oddsratio_recessive_model, pvalue_recessive_model = stats.fisher_exact([[n11_recessive_model, n12_recessive_model],[n21_recessive_model, n22_recessive_model]], alternative='two-sided')
+            tempo_list.extend([n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model)])
 
         # filling a one row data frame with or without adding
         tempo_csq = v.INFO.get('CSQ').split(',') # number of fields in CSQ (comma sep), i.e., nb of rows
@@ -213,7 +213,19 @@ csq_subfield_pos = [26]
             gene = tempo_csq[0].split('|')[3] # See protocole 109: gene taken in position 4 if no SYMBOL field
             consequence = tempo_csq[0].split('|')[1]
             impact = tempo_csq[0].split('|')[2]
-            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, impact, consequence, aff, una, n_hom_ref_aff, n_het_aff, n_hom_alt_aff, n_hom_ref_unaff, n_het_unaff, n_hom_alt_unaff, n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model), n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model), n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model), an]], columns = tsv_columns)
+            df2=pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i3[0]+"="+str(i3[1]) for i3 in v.INFO]), gene, impact, consequence, an, aff, una, n_hom_ref_aff, n_het_aff, n_hom_alt_aff, n_hom_ref_unaff, n_het_unaff, n_hom_alt_unaff]])
+            if bool(re.search("carrier", model)) is True: 
+                df2b=pd.DataFrame([[n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model)]])
+                df2 = pd.concat([df2, df2b], axis = 1)
+
+            if bool(re.search("strict_heterozygous", model)) is True: 
+                df2b=pd.DataFrame([[n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model)]])
+                df2 = pd.concat([df2, df2b], axis = 1)
+
+            if bool(re.search("recessive", model)) is True: 
+                df2b=pd.DataFrame([[n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model)]])
+                df2 = pd.concat([df2, df2b], axis = 1)
+
             if len(tsv_extra_fields_wo_csq) > 0: # add extra columns coming from tsv_extra_fields into the tsv file
                 for i4 in tsv_extra_fields_wo_csq:
                     df2[i4] = v.INFO.get(i4)
@@ -280,8 +292,22 @@ csq_subfield_pos = [26]
             # f = open("test.txt", "a") ; f.write(str(list(range(0, len(subfield_pos)))))
             for i3 in list(range(0, len(subfield_pos))):
                 # f = open("test.txt", "a") ; f.write(str([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, oddsratio, pvalue, -np.log10(pvalue), an, subfield_pos[i3]]]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n' + str(impact) + '\n\n\n\n')
-                tempo = pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], aff, una, n_hom_ref_aff, n_het_aff, n_hom_alt_aff, n_hom_ref_unaff, n_het_unaff, n_hom_alt_unaff, n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model), n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model), n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model), an, subfield_pos[i3]]], columns = tsv_columns)
+                tempo = pd.DataFrame([[v.CHROM, v.POS, v.REF, ''.join(v.ALT), ';'.join([i4[0]+"="+str(i4[1]) for i4 in v.INFO]), gene[i3], impact[i3], consequence[i3], an, aff, una, n_hom_ref_aff, n_het_aff, n_hom_alt_aff, n_hom_ref_unaff, n_het_unaff, n_hom_alt_unaff]])
 
+                if bool(re.search("carrier", model)) is True: 
+                    df2b=pd.DataFrame([[n11_carrier_model, n12_carrier_model, n21_carrier_model, n22_carrier_model, oddsratio_carrier_model, pvalue_carrier_model, -np.log10(pvalue_carrier_model)]])
+                    tempo = tempo.append(df2b)
+
+                if bool(re.search("strict_heterozygous", model)) is True: 
+                    df2b=pd.DataFrame([[n11_hetero_model, n12_hetero_model, n21_hetero_model, n22_hetero_model, oddsratio_hetero_model, pvalue_hetero_model, -np.log10(pvalue_hetero_model)]])
+                    tempo = tempo.append(df2b)
+
+                if bool(re.search("recessive", model)) is True: 
+                    df2b=pd.DataFrame([[n11_recessive_model, n12_recessive_model, n21_recessive_model, n22_recessive_model, oddsratio_recessive_model, pvalue_recessive_model, -np.log10(pvalue_recessive_model)]])
+                    tempo = tempo.append(df2b)
+
+                df2b = pd.DataFrame([[subfield_pos[i3]]])
+                tempo = tempo.append(df2b)
                 # f = open("test.txt", "a") ; f.write(str(csq_subfield_name) + '\n')
                 for i4 in csq_subfield_name: # for each CSQ_ field wanted (polyphen, SIFT), column added to the data frame
                     # f = open("test.txt", "a") ; f.write(str(csq_subfield_name) + '\n\n\n\n' + str(csq_subfield_pos) + '\n\n\n\n' + str(locals()[i4][i3]) + '\n\n\n\n' + str(i3) + '\n\n\n\n' + str(subfield_pos) + '\n\n\n\n')
@@ -324,14 +350,14 @@ if isinstance(tsv_extra_fields, str) is not True:
     sys.exit("\n\n========\n\nError in add_fisher.py: the tsv_extra_fields must be a single character string: \n"+"".join(tsv_extra_fields)+"\n\n========\n\n")
 
 if isinstance(filter_indiv_DP, str) is not True:
-    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_DP must be a single character string made of a float number: \n"+"".join(filter_indiv_DP)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_DP must be a single character string made of a float number: \n"+"".join(str(filter_indiv_DP))+"\n\n========\n\n")
 elif not all(char.isdigit() or char == '.' for char in filter_indiv_DP): # if not isinstance(filter_indiv_DP, (float, int)) :
     sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_DP must be a single character string made of a float number: \n"+"".join(filter_indiv_DP)+"\nType: "+str(type(filter_indiv_DP))+"\n\n========\n\n")
 else:
     filter_indiv_DP = float(filter_indiv_DP)
 
 if isinstance(filter_indiv_GQ, str) is not True:
-    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_GQ must be a single character string made of a float number: \n"+"".join(filter_indiv_GQ)+"\n\n========\n\n")
+    sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_GQ must be a single character string made of a float number: \n"+"".join(str(filter_indiv_GQ))+"\n\n========\n\n")
 elif not all(char.isdigit() or char == '.' for char in filter_indiv_GQ): # if not isinstance(filter_indiv_GQ, (float, int)) :
     sys.exit("\n\n========\n\nError in add_fisher.py: the filter_indiv_GQ must be a single character string made of a float number: \n"+"".join(filter_indiv_GQ)+"\nType: "+str(type(filter_indiv_GQ))+"\n\n========\n\n")
 else:
@@ -427,7 +453,7 @@ with open(vcf_csq_subfield_titles_path, 'r') as f:
 ############ modifications of imported tables
 
 # checking that everything is fine with tsv_extra_fields, and info recovering
-tsv_columns = ['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE', 'IMPACT', 'CONSEQUENCE', 'PATIENT_NB', 'N_AFF', 'N_UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF'] #warning : can be replaced below
+tsv_columns = ['CHROM', 'POS', 'REF', 'ALT', 'INFO', 'GENE', 'IMPACT', 'CONSEQUENCE', 'PATIENT_NB', 'AFF', 'UNAFF', 'N_HOM_REF_AFF', 'N_HET_AFF', 'N_HOM_ALT_AFF', 'N_HOM_REF_UNAFF', 'N_HET_UNAFF', 'N_HOM_ALT_UNAFF'] #warning : can be replaced below
 if bool(re.search("carrier", model)) is True: 
     tsv_columns = tsv_columns + ['N11_CARRIER_MODEL', 'N12_CARRIER_MODEL', 'N21_CARRIER_MODEL', 'N22_CARRIER_MODEL', 'OR_CARRIER_MODEL', 'P_VALUE_CARRIER_MODEL', 'NEG_LOG10_P_VALUE_CARRIER_MODEL']
 
@@ -484,7 +510,7 @@ with warnings.catch_warnings():
 #                tempo = fisher(v = v, columns = columns)
 #                df = df.append(tempo)
     for v in vcf: # parse each line of vcf with the content of region in it
-        tempo = fisher(v = v, status = status, tsv_columns = tsv_columns, tsv_extra_fields_wo_csq = tsv_extra_fields_wo_csq, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos, filter_indiv_DP = filter_indiv_DP, filter_indiv_GQ = filter_indiv_GQ)
+        tempo = fisher(v = v, status = status, model = model, tsv_columns = tsv_columns, tsv_extra_fields_wo_csq = tsv_extra_fields_wo_csq, csq_subfield_name = csq_subfield_name, csq_subfield_pos = csq_subfield_pos, filter_indiv_DP = filter_indiv_DP, filter_indiv_GQ = filter_indiv_GQ)
         df = df.append(tempo)
 
 # on ecrit la dataframe dans un fichier
