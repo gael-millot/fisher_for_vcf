@@ -38,6 +38,8 @@
 ## WARNINGS
 
 - The indiv counting (column *N* of the *res_fisher.tsv.gz* ouput file) is dependent on the read depth (DP) and genotype quality (GQ), according to the *filter_indiv_DP* and *filter_indiv_GQ* parameters in the *nextflow.config* file. Indiv with empty DP or "." value, or with empty GQ or "." value are also not counted.
+- Consider the five first fields of the VCF as: 'CHROM', 'POS', 'REF', 'ALT', 'INFO'
+- Consider that gene, impact and consequence are in position 3, 2, and 1 in CSQ subfield of INFO
 
 <br /><br />
 ## CONTENT
