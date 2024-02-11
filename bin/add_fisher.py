@@ -136,6 +136,7 @@ vcf = VCF("example.vcf.gz")
 count = 1 
 for v in vcf:
     if count == 1: break
+
 # use dir(v) for the methods of v and str(v) for the string in v and len(str(v).split('\t')) for the fields nb
 status = {'P1': 1, 'P2': 2, 'P3': 1, 'P4': 2, 'P5': 2, 'P6': 1, 'P7': 2, 'P8': 1, 'P9': 2, 'P10': 2, 'P11': 2}
 model = 'carrier|strict_heterozygous'
@@ -271,6 +272,7 @@ filter_indiv_GQ = 10.0
         dfpart5 = pd.DataFrame(np.array(part5))
         df = pd.concat([df, dfpart5], axis=1, join="inner")
     
+    df = df[~df.astype(str).duplicated()] # remove duplicated rows. astype(str) convert df into string, because duplicated() cannot work if dict columns present. Tild is for not (invert true and false)
     df.columns = column_names
     return df
 
