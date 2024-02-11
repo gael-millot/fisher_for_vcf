@@ -307,6 +307,11 @@ Special acknowledgement to [Brent Pedersen](https://github.com/brentp), Utrecht,
 <br /><br />
 ## WHAT'S NEW IN
 
+### v5.1
+
+- fisher.py debugged + modified to also compute fisher for variants with no CSQ (VEP) annotations
+
+
 ### v5.0
 
 - github transfert
