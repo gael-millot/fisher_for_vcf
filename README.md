@@ -307,15 +307,20 @@ Special acknowledgement to [Brent Pedersen](https://github.com/brentp), Utrecht,
 <br /><br />
 ## WHAT'S NEW IN
 
+### v5.2
+
+- pigz replaced by bgzip in process extract.
+
+
 ### v5.1
 
-- fisher.py debugged + modified to also compute fisher for variants with no CSQ (VEP) annotations
+- fisher.py debugged + modified to also compute fisher for variants with no CSQ (VEP) annotations.
 
 
 ### v5.0
 
 - github transfert
-- New model parameter added (carrier|strict_heterozygous|recessive) for OR computation
+- New model parameter added (carrier|strict_heterozygous|recessive) for OR computation.
 
 
 ### v4.0

@@ -116,7 +116,7 @@ process extract {
         ln -s ${vcf} "extracted.vcf.gz" | tee extract_report.txt
         ln -s ${tbi} "extracted.vcf.gz.tbi" | tee -a extract_report.txt
     else
-        bcftools filter --regions ${region} ${vcf} | pigz > extracted.vcf.gz | tee extract_report.txt
+        bcftools filter --regions ${region} ${vcf} | bgzip > extracted.vcf.gz | tee extract_report.txt
         tabix -p vcf extracted.vcf.gz | tee -a extract_report.txt
     fi
     """
