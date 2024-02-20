@@ -132,6 +132,7 @@ def fisher(v, status, model, tsv_columns, tsv_extra_fields_wo_csq, csq_subfield_
             fisher(v = v, tsv_columns = tsv_columns, tsv_extra_fields = tsv_extra_fields)
     DEBUGGING
         # use the container: sudo docker run -ti --entrypoint bash -v /mnt/c/Users/gael/Documents/Git_projects/fisher_for_vcf/dataset:/tmp gmillot/python_v3.9.10_extended_v3.1:gitlab_v8.7)
+        # or the local WSL2
 vcf = VCF("example.vcf.gz")
 count = 1 
 for v in vcf:

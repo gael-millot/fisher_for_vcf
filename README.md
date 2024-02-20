@@ -1,11 +1,11 @@
-
 [//]: # "#to make links in gitlab: example with racon https://github.com/isovic/racon"
 [//]: # "tricks in markdown: https://openclassrooms.com/fr/courses/1304236-redigez-en-markdown"
 
-| usage | dependencies |
-| --- | --- |
-| [![Nextflow](https://img.shields.io/badge/code-Nextflow-blue?style=plastic)](https://www.nextflow.io/) | [![Dependencies: Nextflow Version](https://img.shields.io/badge/Nextflow-v23.04.4-blue?style=plastic)](https://github.com/nextflow-io/nextflow) |
-| [![License: GPL-3.0](https://img.shields.io/badge/licence-GPL%20(%3E%3D3)-green?style=plastic)](https://www.gnu.org/licenses) | |
+
+[![Nextflow](https://img.shields.io/badge/code-Nextflow-blue?style=plastic)](https://www.nextflow.io/)
+&nbsp;
+[![License: GPL-3.0](https://img.shields.io/badge/licence-GPL%20(%3E%3D3)-green?style=plastic)](https://www.gnu.org/licenses)
+
 
 <br /><br />
 ## TABLE OF CONTENTS
@@ -44,7 +44,7 @@
 <br /><br />
 ## CONTENT
 
-| fisher_for_vcf folder | Description |
+| Files and folder | Description |
 | --- | --- |
 | **main.nf** | File that can be executed using a linux terminal, a MacOS terminal or Windows 10 WSL2. |
 | **nextflow.config** | Parameter settings for the *main.nf* file. Users have to open this file, set the desired settings and save these modifications before execution. |
@@ -61,16 +61,16 @@
 | Human chromo infos file. |
 
 
-<br /><br />
-The dataset used in the *nextflow.config* file, as example, is available at https://zenodo.org/records/10084500/files/fisher_for_vcf.zip
+<br />
+The dataset used in the *nextflow.config* file, as example, is available at [https://zenodo.org/records/10684445](https://zenodo.org/records/10684445)
 
 
 | Dataset folder | Description |
 | --- | --- |
-| **example.vcf.gz** | VCF file compressed using `bgzip <vcf_name>`. |
-| **example.vcf.gz.tbi** | Index file associated to the VCF file, obtained using `tabix <vcf_name>.gz`. |
-| **pedigree.txt** | Pedigree file. |
-| **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot |
+| **example.vcf.gz** | VCF file compressed using `bgzip <vcf_name>`. Available [here](https://zenodo.org/records/10684445/files/example.vcf.gz.zip). |
+| **example.vcf.gz.tbi** | Index file associated to the VCF file, obtained using `tabix <vcf_name>.gz`. Available [here](https://zenodo.org/records/10684445/files/example.vcf.gz.zip). |
+| **pedigree.txt** | Pedigree file. Available [here](https://zenodo.org/records/10684445/files/pedigree.txt). |
+| **hg19_grch37p5_chr_size_cumul.txt** | Coordinates of the hg19_grch37p5 Human Genome for the Miami plot. Available [here](https://zenodo.org/records/10684445/files/hg19_grch37p5_chr_size_cumul.txt). |
 
 
 <br /><br />
@@ -83,11 +83,11 @@ Installation of:<br />
 [Graphviz](https://www.graphviz.org/download/), `sudo apt install graphviz` for Linux ubuntu<br />
 [Apptainer](https://github.com/apptainer/apptainer)<br />
 
-<br /><br />
+
 ### 2. Local running (personal computer)
 
 
-#### 2.1. *main.nf* file in the personal computer
+####	2.1. *main.nf* file in the personal computer
 
 - Mount a server if required:
 
@@ -111,19 +111,20 @@ nextflow run main.nf -c nextflow.config
 
 with -c to specify the name of the config file used.
 
-<br /><br />
-#### 2.3. *main.nf* file in the public gitlab repository
+
+#### 2.2.	*main.nf* file in the public git repository
 
 Run the following command from where you want the results:
 
 ```
-nextflow run -hub pasteur gmillot/fisher_for_vcf -r v1.0.0
+nextflow run gael-millot/fisher_for_vcf # github, or nextflow run http://github.com/gael-millot/fisher_for_vcf
+nextflow run -hub pasteur gmillot/fisher_for_vcf -r v1.0.0 # gitlab
 ```
 
-<br /><br />
+
 ### 3. Distant running (example with the Pasteur cluster)
 
-#### 3.1. Pre-execution
+####	3.1. Pre-execution
 
 Copy-paste this after having modified the EXEC_PATH variable:
 
@@ -142,12 +143,12 @@ export GRAPHVIZ_CONF_AFTER=bin/graphviz # on maestro
 
 MODULES="${CONF_BEFORE}/${JAVA_CONF}/${JAVA_CONF_AFTER},${CONF_BEFORE}/${APP_CONF}/${APP_CONF_AFTER},${CONF_BEFORE}/${GIT_CONF}/${GIT_CONF_AFTER}/${GRAPHVIZ_CONF}/${GRAPHVIZ_CONF_AFTER}"
 cd ${EXEC_PATH}
-chmod 755 ${EXEC_PATH}/bin/*.* # not required if no bin folder
+chmod 755 ${EXEC_PATH}/bin/*.*
 module load ${JAVA_CONF} ${APP_CONF} ${GIT_CONF} ${GRAPHVIZ_CONF}
 ```
 
-<br /><br />
-#### 3.2. *main.nf* file in a cluster folder
+
+####	3.2. *main.nf* file in a cluster folder
 
 Modify the second line of the code below, and run from where the *main.nf* and *nextflow.config* files are (which has been set thanks to the EXEC_PATH variable above):
 
@@ -160,8 +161,8 @@ HOME=$HOME_INI
 trap SIGINT
 ```
 
-<br /><br />
-#### 3.3. *main.nf* file in the public gitlab repository
+
+####	3.3. *main.nf* file in the public git repository
 
 Modify the first and third lines of the code below, and run (results will be where the EXEC_PATH variable has been set above):
 
@@ -170,15 +171,16 @@ VERSION="v1.0"
 HOME_INI=$HOME
 HOME="${ZEUSHOME}/fisher_for_vcf/" # $HOME changed to allow the creation of .nextflow into /$ZEUSHOME/fisher_for_vcf/, for instance. See NFX_HOME in the nextflow software script
 trap '' SIGINT
-nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config
+nextflow run --modules ${MODULES} gael-millot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config #github, or nextflow run --modules ${MODULES} http://github.com/gael-millot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config
+nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config # gitlab
 HOME=$HOME_INI
 trap SIGINT
 ```
 
-<br /><br />
+
 ### 4. Error messages and solutions
 
-#### Message 1
+####	Message 1
 <pre>
 Unknown error accessing project `gmillot/fisher_for_vcf` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot/fisher_for_vcf
 </pre>
@@ -188,14 +190,14 @@ Purge using:
 rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/gmillot*
 ```
 
-#### Message 2
+####	Message 2
 <pre>
 WARN: Cannot read project manifest -- Cause: Remote resource not found: https://gitlab.pasteur.fr/api/v4/projects/gmillot%2Ffisher_for_vcf
 </pre>
 
 Contact Gael Millot (distant repository is not public).
 
-#### Message 3
+####	Message 3
 <pre>
 permission denied
 </pre>
@@ -209,7 +211,7 @@ chmod 755 bin/*.*
 <br /><br />
 ## OUTPUT
 
-An example of results obtained with the dataset is present at this address: https://zenodo.org/records/10084500/files/fisher_for_vcf.zip
+An example of results obtained with the dataset is present at this address: [https://zenodo.org/records/10684495/files/fisher_for_vcf_1708440910.zip](https://zenodo.org/records/10684495/files/fisher_for_vcf_1708440910.zip)
 <br /><br />
 
 
@@ -297,15 +299,20 @@ The developers & maintainers of the mentioned softwares and packages, including:
 - [Nextflow](https://www.nextflow.io/)
 - [Apptainer](https://apptainer.org/)
 - [Docker](https://www.docker.com/)
+- [Git](https://git-scm.com/)
+- [Github](https://github.com/)
 - [Gitlab](https://about.gitlab.com/)
 - [Bash](https://www.gnu.org/software/bash/)
 - [Ubuntu](https://ubuntu.com/)
 
-Special acknowledgement to [Brent Pedersen](https://github.com/brentp), Utrecht, The Netherlands, for the release of [cyvcf2](https://brentp.github.io/cyvcf2/docstrings.html).
-
 
 <br /><br />
 ## WHAT'S NEW IN
+
+### v5.3
+
+- main.nf modified to deal with zipped .gz and .gz.tbi.
+
 
 ### v5.2
 

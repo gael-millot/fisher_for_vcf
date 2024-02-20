@@ -17,6 +17,28 @@ nextflow.enable.dsl=2
 //////// Processes
 
 
+process Unzip {
+    label 'bash'
+    cache 'true'
+
+    input:
+    path gz_zip
+    val sample_path
+
+    output:
+    path "*.gz", emit: gz_ch
+    path "*.tbi", emit: gz_tbi_ch
+    """
+    unzip ${gz_zip}
+    gz=(./*.gz) # array
+    tbi=(./*.gz.tbi) # array
+    if (( \${#gz[@]} != 1 )) && (( \${#tbi[@]} != 1 )) ; then # to test that no gz files: if ! ls ./*.gz 1> /dev/null 2>&1; then
+        echo -e "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID zip FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nTHE zip FILE MUST CONTAIN A SINGLE .gz FILE AND A SINGLE .gz.tbi FILE\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\nUSE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE -> .gz.tbi FILE\n\n========\n\n"
+        exit 1
+    fi
+    """
+}
+
 process workflowParam { // create a file with the workflow parameters in out_path
     label 'bash'
     publishDir "${out_path}/reports", mode: 'copy', overwrite: false
@@ -241,7 +263,7 @@ process tsv_variant_nb {
 }
 
 process tsv_compress {
-    label 'bash' // see the withLabel: bash in the nextflow config file 
+    label 'bcftools' // to have gzip 
     publishDir path: "${out_path}", mode: 'copy', pattern: "{res_fisher.tsv.gz}",overwrite: false
     cache 'true'
 
@@ -350,7 +372,6 @@ workflow {
 
     //////// Variables
 
-    modules = params.modules // remove the dot -> can be used in bash scripts
     config_file = workflow.configFiles[0] // better to use this than config_file = file("${projectDir}/nextflow.config") because the latter is not good if -c option of nextflow run is used // file() create a path object necessary o then create the file
     log_file = file("${launchDir}/.nextflow.log")
 
@@ -368,12 +389,12 @@ workflow {
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN repertoire_profiler.config FILE:\n${sample_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
     }else if( ! (file(sample_path).exists()) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }else if( ! sample_path =~ /.*\.gz$/){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .gz VCF FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\n\n========\n\n"
-    }else if( ! (file("${sample_path}.tbi").exists()) ){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
-    }else{
-        tbi_file = file("${sample_path}.tbi")
+    }else if( ! (sample_path =~ /.*\.gz\.zip$/ || sample_path =~ /.*\.gz$/)){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .gz OR .gz.zip VCF FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\nUSE zip TO COMPRESS BOTH THE VCF AND .tbi FILES IN A SAME .zip FORMAT (THE FILE MUST FINISH BY .gz.zip)\n\n========\n\n"
+    }else if(sample_path =~ /.*\.gz$/){
+        if( ! (file("${sample_path}.tbi").exists()) ){
+            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
+        }
     }
     if( ! (ped_path.class == String) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN repertoire_profiler.config FILE:\n${ped_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
@@ -501,7 +522,7 @@ workflow {
 
     //////// Channels
 
-    vcf_ch = Channel.fromPath(sample_path) 
+    // see below for     vcf_ch = Channel.fromPath(sample_path) 
 
     if(region != 'none'){
         if(region =~ / /){ 
@@ -536,6 +557,18 @@ workflow {
 
 
     //////// Main
+
+    if(sample_path =~ /.*\.gz\.zip$/){
+        Unzip( // warning: it is a process defined above
+            Channel.fromPath(sample_path), 
+            sample_path
+        ) 
+        vcf_ch = Unzip.out.gz_ch
+        tbi_file = Unzip.out.gz_tbi_ch
+    }else{
+        vcf_ch = Channel.fromPath(sample_path) 
+        tbi_file = file("${sample_path}.tbi")
+    }
 
     workflowParam(
         modules
