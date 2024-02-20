@@ -29,11 +29,12 @@ process Unzip {
     path "*.gz", emit: gz_ch
     path "*.tbi", emit: gz_tbi_ch
     """
+    #!/bin/bash -ue
     unzip ${gz_zip}
     gz=(./*.gz) # array
     tbi=(./*.gz.tbi) # array
     if (( \${#gz[@]} != 1 )) && (( \${#tbi[@]} != 1 )) ; then # to test that no gz files: if ! ls ./*.gz 1> /dev/null 2>&1; then
-        echo -e "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID zip FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nTHE zip FILE MUST CONTAIN A SINGLE .gz FILE AND A SINGLE .gz.tbi FILE\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\nUSE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE -> .gz.tbi FILE\n\n========\n\n"
+        echo -e "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID zip FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE:\n${sample_path}\nTHE zip FILE MUST CONTAIN A SINGLE .gz FILE AND A SINGLE .gz.tbi FILE\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\nUSE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE -> .gz.tbi FILE\n\n========\n\n"
         exit 1
     fi
     """

@@ -309,6 +309,11 @@ The developers & maintainers of the mentioned softwares and packages, including:
 <br /><br />
 ## WHAT'S NEW IN
 
+### v5.4
+
+- nextflow.config ok with zipped .gz and .gz.tbi from zenodo.
+
+
 ### v5.3
 
 - main.nf modified to deal with zipped .gz and .gz.tbi.
