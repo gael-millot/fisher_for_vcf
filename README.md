@@ -309,6 +309,11 @@ The developers & maintainers of the mentioned softwares and packages, including:
 <br /><br />
 ## WHAT'S NEW IN
 
+### v5.5
+
+- Error messages improved.
+
+
 ### v5.4
 
 - nextflow.config ok with zipped .gz and .gz.tbi from zenodo.

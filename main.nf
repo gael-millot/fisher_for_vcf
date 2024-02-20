@@ -391,21 +391,21 @@ workflow {
     }else if( ! (file(sample_path).exists()) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID sample_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
     }else if( ! (sample_path =~ /.*\.gz\.zip$/ || sample_path =~ /.*\.gz$/)){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .gz OR .gz.zip VCF FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\nUSE zip TO COMPRESS BOTH THE VCF AND .tbi FILES IN A SAME .zip FORMAT (THE FILE MUST FINISH BY .gz.zip)\n\n========\n\n"
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .gz OR .gz.zip VCF FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE:\n${sample_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nUSE bgzip <NAME>.vcf TO COMPRESS THE VCF FILE IN A .gz FORMAT\nUSE zip TO COMPRESS BOTH THE VCF AND .tbi FILES IN A SAME .zip FORMAT (THE FILE MUST FINISH BY .gz.zip)\n\n========\n\n"
     }else if(sample_path =~ /.*\.gz$/){
         if( ! (file("${sample_path}.tbi").exists()) ){
-            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE: ${sample_path}.tbi\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\nOTHERWISE, USE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE\n\n========\n\n"
+            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nABSENT .tbi FILE ASSOCIATED TO sample_path PARAMETER IN nextflow.config FILE:\n${sample_path}\nUSE tabix -p vcf <NAME>.vcf TO INDEX THE .gz FILE. THIS .tbi FILE MUST BE PRESENT IN THE SAME FOLDER AS THE .gz FILE\n\n========\n\n"
         }
     }
     if( ! (ped_path.class == String) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN repertoire_profiler.config FILE:\n${ped_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
     }else if( ! (file(ped_path).exists()) ){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${ped_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ped_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST):\n${ped_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
     }
     if( ! (chr_path.class == String ) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN repertoire_profiler.config FILE:\n${chr_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
     }else if( ! (file(chr_path).exists()) ){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST): ${chr_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID chr_path PARAMETER IN repertoire_profiler.config FILE (DOES NOT EXIST):\n${chr_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
     }
     if( ! region.class == String ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID region PARAMETER IN nextflow.config FILE:\n${region}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
