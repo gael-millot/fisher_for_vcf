@@ -53,15 +53,15 @@
 
 | Required files |
 | --- |
-| Variant Calling Format (VCF) file (zipped or not). |
-| Pedigree file. |
-| Human chromo infos file. |
-
+| A variant Calling Format (VCF) file (zipped or not). |
+| A pedigree file. |
+| A human chromo infos file. |
 
 <br />
-The dataset used in the *nextflow.config* file, as example, is available at [https://zenodo.org/records/10684445](https://zenodo.org/records/10684445)
 
+The dataset used in the *nextflow.config* file, as example, is available at https://zenodo.org/records/10684495.
 
+<br />
 | Dataset folder | Description |
 | --- | --- |
 | **example.vcf.gz** | VCF file compressed using `bgzip <vcf_name>`. Available [here](https://zenodo.org/records/10684445/files/example.vcf.gz.zip). |
@@ -208,7 +208,7 @@ chmod 755 bin/*.*
 <br /><br />
 ## OUTPUT
 
-An example of results obtained with the dataset is present at this address: [https://zenodo.org/records/10684495/files/fisher_for_vcf_1708440910.zip](https://zenodo.org/records/10684495/files/fisher_for_vcf_1708440910.zip)
+An example of results obtained with the dataset is present at this address: https://zenodo.org/records/10684495/files/fisher_for_vcf_1708440910.zip.
 <br /><br />
 
 
