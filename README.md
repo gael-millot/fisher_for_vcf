@@ -62,6 +62,7 @@
 The dataset used in the *nextflow.config* file, as example, is available at https://zenodo.org/records/10684495.
 
 <br />
+
 | Dataset folder | Description |
 | --- | --- |
 | **example.vcf.gz** | VCF file compressed using `bgzip <vcf_name>`. Available [here](https://zenodo.org/records/10684445/files/example.vcf.gz.zip). |
