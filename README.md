@@ -1,13 +1,3 @@
-<head>
-  <style>
-    a {
-      text-decoration: none;
-      color: blue;
-    }
-  </style>
-</head>
-
-
 | Usage | Requirement |
 | --- | --- |
 | [![Nextflow](https://img.shields.io/badge/code-Nextflow-blue?style=plastic)](https://www.nextflow.io/) | [![Dependencies: Nextflow Version](https://img.shields.io/badge/Nextflow-v23.04.4.5881-blue?style=plastic)](https://github.com/nextflow-io/nextflow) |
