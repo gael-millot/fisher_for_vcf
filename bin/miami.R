@@ -586,13 +586,23 @@ for(i0 in c("y.threshold1", "y.threshold2")){
     }
 }
 
-if( ! top.y.column %in% names(obs)){
-    tempo.cat <- paste0("ERROR IN miami.R:\nTHE top.y.column PARAMETER MUST BE A COLUMN NAME OF THE FISHER TABLE.\n\ntop.y.column PARAMETER:\n", paste0(top.y.column, collapse = " "), "\n\nCOLUMN NAMES:\n", paste0(names(obs), collapse = "\n"))
-    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+if( ! is.null(top.y.column)){
+    if( ! top.y.column %in% names(obs)){
+        tempo.cat <- paste0("ERROR IN miami.R:\nF NOT NULL, THE top.y.column PARAMETER MUST BE A COLUMN NAME OF THE FISHER TABLE.\n\ntop.y.column PARAMETER:\n", paste0(top.y.column, collapse = " "), "\n\nCOLUMN NAMES:\n", paste0(names(obs), collapse = "\n"))
+        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+    }
+}else{ # inactivation of these parameters if top.y.column is NULL
+    y.lim1 <- NULL
+    y.threshold1 <- NULL
 }
-if( ! bottom.y.column %in% names(obs)){
-    tempo.cat <- paste0("ERROR IN miami.R:\nTHE bottom.y.column PARAMETER MUST BE A COLUMN NAME OF THE FISHER TABLE.\n\nbottom.y.column PARAMETER:\n", paste0(bottom.y.column, collapse = " "), "\n\nCOLUMN NAMES:\n", paste0(names(obs), collapse = "\n"))
-    stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+if( ! is.null(bottom.y.column)){
+    if( ! bottom.y.column %in% names(obs)){
+        tempo.cat <- paste0("ERROR IN miami.R:\nIF NOT NULL, THE bottom.y.column PARAMETER MUST BE A COLUMN NAME OF THE FISHER TABLE.\n\nbottom.y.column PARAMETER:\n", paste0(bottom.y.column, collapse = " "), "\n\nCOLUMN NAMES:\n", paste0(names(obs), collapse = "\n"))
+        stop(paste0("\n\n================\n\n", tempo.cat, "\n\n================\n\n"), call. = FALSE) # == in stop() to be able to add several messages between ==
+    }
+}else{ # inactivation of these parameters if bottom.y.column is NULL
+    y.lim2 <- NULL
+    y.threshold2 <- NULL
 }
 
 
@@ -673,7 +683,7 @@ if(empty.obs == TRUE){
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), ggplot2::ggtitle(
         paste0("x.lim: ", ifelse(is.whole, "whole genome", x.lim), 
         ifelse( ! is.null(y.threshold1), paste0(", top threshold: ", y.threshold1), ""), 
-        ifelse( ! (is.null(y.threshold2) & is.null(bottom.y.column)), paste0(", bottom threshold: ", y.threshold2), ""), 
+        ifelse( ! is.null(y.threshold2), paste0(", bottom threshold: ", y.threshold2), ""), 
         ifelse(y.log1, ", top y-axis: log10", ""), ifelse(y.log2, ", bottom y-axis: log10", ""))
     ))
     assign(paste0(tempo.gg.name, tempo.gg.count <- tempo.gg.count + 1), scale_x_continuous(

@@ -307,6 +307,11 @@ The developers & maintainers of the mentioned softwares and packages, including:
 <br /><br />
 ## WHAT'S NEW IN
 
+### v5.6
+
+- Miami plot: bugged fixed.
+
+
 ### v5.5
 
 - Error messages improved.
