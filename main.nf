@@ -355,12 +355,7 @@ process backup {
 
 workflow {
 
-    //////// Options of nextflow run
-
     print("\n\nINITIATION TIME: ${workflow.start}")
-
-    //////// end Options of nextflow run
-
 
     //////// Options of nextflow run
 
@@ -369,6 +364,7 @@ workflow {
     // end --modules (it is just for the process workflowParam)
 
     //////// end Options of nextflow run
+
 
 
     //////// Variables
@@ -668,6 +664,8 @@ workflow {
         config_file, 
         log_file
     )
-
+    //////// end Main
 
 }
+
+//////// end Workflow
