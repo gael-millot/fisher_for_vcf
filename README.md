@@ -1,5 +1,5 @@
 | Usage | Requirement |
-| --- | --- |
+| :--- | :--- |
 | [![Nextflow](https://img.shields.io/badge/code-Nextflow-blue?style=plastic)](https://www.nextflow.io/) | [![Dependencies: Nextflow Version](https://img.shields.io/badge/Nextflow-v23.04.4.5881-blue?style=plastic)](https://github.com/nextflow-io/nextflow) |
 | [![License: GPL-3.0](https://img.shields.io/badge/licence-GPL%20(%3E%3D3)-green?style=plastic)](https://www.gnu.org/licenses) | [![Dependencies: Apptainer Version](https://img.shields.io/badge/Apptainer-v1.2.3-blue?style=plastic)](https://github.com/apptainer/apptainer) |
 | | [![Dependencies: Graphviz Version](https://img.shields.io/badge/Graphviz-v2.42.2-blue?style=plastic)](https://www.graphviz.org/download/) |
@@ -33,16 +33,16 @@
 
 <br /><br />
 ## WARNINGS
-
+<br />
 - The indiv counting (column *N* of the *res_fisher.tsv.gz* ouput file) is dependent on the read depth (DP) and genotype quality (GQ), according to the *filter_indiv_DP* and *filter_indiv_GQ* parameters in the *nextflow.config* file. Indiv with empty DP or "." value, or with empty GQ or "." value are also not counted.
 - Consider the five first fields of the VCF as: 'CHROM', 'POS', 'REF', 'ALT', 'INFO'
 - Consider that gene, impact and consequence are in position 3, 2, and 1 in CSQ subfield of INFO
 
 <br /><br />
 ## CONTENT
-
+<br />
 | Files and folder | Description |
-| --- | --- |
+| :--- | :--- |
 | **main.nf** | File that can be executed using a linux terminal, a MacOS terminal or Windows 10 WSL2. |
 | **nextflow.config** | Parameter settings for the *main.nf* file. Users have to open this file, set the desired settings and save these modifications before execution. |
 | **bin folder** | Contains files required by the *main.nf* file. |
@@ -50,9 +50,9 @@
 
 <br /><br />
 ## INPUT
-
+<br />
 | Required files |
-| --- |
+| :--- |
 | A variant Calling Format (VCF) file (zipped or not). |
 | A pedigree file. |
 | A human chromo infos file. |
@@ -64,7 +64,7 @@ The dataset used in the *nextflow.config* file, as example, is available at http
 <br />
 
 | File name | Description |
-| --- | --- |
+| :--- | :--- |
 | **example.vcf.gz** | VCF file compressed using `bgzip <vcf_name>`. Available [here](https://zenodo.org/records/10684445/files/example.vcf.gz.zip). |
 | **example.vcf.gz.tbi** | Index file associated to the VCF file, obtained using `tabix <vcf_name>.gz`. Available [here](https://zenodo.org/records/10684445/files/example.vcf.gz.zip). |
 | **pedigree.txt** | Pedigree file. Available [here](https://zenodo.org/records/10684445/files/pedigree.txt). |
@@ -229,7 +229,7 @@ An example of results obtained with the dataset is present at this address: http
 <br />
 
 | File | Description |
-| --- | --- |
+| :--- | :--- |
 | **CHROM** | chromosome |
 | **POS** | position in the chromosome (hg19)| 
 | **REF** | nucleotide on the reference sequence (hg19) |
@@ -260,7 +260,7 @@ An example of results obtained with the dataset is present at this address: http
 ## VERSIONS
 
 
-The different releases are tagged [here](https://github.com/gael-millot/fisher_for_vcf/tags)
+The different releases are tagged [here](https://github.com/gael-millot/fisher_for_vcf/tags).
 
 <br /><br />
 ## LICENCE
@@ -274,7 +274,7 @@ See the GNU General Public License for more details at https://www.gnu.org/licen
 ## CITATION
 
 
-Not yet published
+Not yet published.
 
 
 <br /><br />
