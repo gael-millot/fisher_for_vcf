@@ -28,6 +28,8 @@ process Unzip {
     output:
     path "*.gz", emit: gz_ch
     path "*.tbi", emit: gz_tbi_ch
+
+    script:
     """
     #!/bin/bash -ue
     unzip ${gz_zip}

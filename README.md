@@ -170,7 +170,7 @@ Modify the second line of the code below, and run from where the *main.nf* and *
 ```
 HOME_INI=$HOME
 HOME="${HELIXHOME}/fisher_for_vcf/" # $HOME changed to allow the creation of .nextflow into /$HELIXHOME/fisher_for_vcf/, for instance. See NFX_HOME in the nextflow software script
-nextflow run --modules ${MODULES} main.nf -c nextflow.config
+nextflow run main.nf -c nextflow.config
 HOME=$HOME_INI
 ```
 
@@ -183,8 +183,8 @@ Modify the first and third lines of the code below, and run (results will be whe
 VERSION="v1.0"
 HOME_INI=$HOME
 HOME="${HELIXHOME}/fisher_for_vcf/" # $HOME changed to allow the creation of .nextflow into /$HELIXHOME/fisher_for_vcf/, for instance. See NFX_HOME in the nextflow software script
-nextflow run --modules ${MODULES} gael-millot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config #github, or nextflow run --modules ${MODULES} http://github.com/gael-millot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config
-nextflow run --modules ${MODULES} -hub pasteur gmillot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config # gitlab
+nextflow run gael-millot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config #github, or nextflow run http://github.com/gael-millot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config
+nextflow run -hub pasteur gmillot/fisher_for_vcf -r $VERSION -c $HOME/nextflow.config # gitlab
 HOME=$HOME_INI
 ```
 
